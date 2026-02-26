@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Drinks</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Drinks">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:wght@300;600;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;
+  --accent:#e8c97a;--text:#f0eee8;--muted:#6e6e80;
+  --danger:#ff6b6b;--success:#6bcb8b;
+}
+html {
+  height: 100%;
+  overflow: hidden;
+}
+body{
+  background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;
+  min-height:100%;height:100%;overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  display:flex;flex-direction:column;align-items:center;
+  padding:max(36px, env(safe-area-inset-top)) 16px max(80px, env(safe-area-inset-bottom));
+  background-image:radial-gradient(ellipse at 20% 10%,#1a1a2e 0%,transparent 60%),
+                   radial-gradient(ellipse at 80% 80%,#1c1410 0%,transparent 60%);
+}
+h1{
+  font-family:'Fraunces',serif;font-weight:900;
+  font-size:clamp(2.2rem,6vw,3.5rem);letter-spacing:-0.02em;
+  color:var(--accent);text-align:center;margin-bottom:4px;line-height:1;
+}
+.subtitle{font-size:.68rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:28px}
+
+/* top bar */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;max-width:440px;margin-bottom:6px;
+}
+.topbar-spacer{width:44px;}
+.burger-btn{
+  width:44px;height:44px;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;cursor:pointer;transition:border-color .2s;flex-shrink:0;
+}
+.burger-btn:hover{border-color:var(--accent);}
+.burger-line{width:18px;height:2px;background:var(--text);border-radius:2px;}
+
+/* drawer */
+.drawer-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;
+}
+.drawer-bg.open{display:block;}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(320px,90vw);
+  background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  z-index:301;overflow-y:auto;
+}
+.drawer-bg.open .drawer{transform:translateX(0);}
+.drawer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 20px 16px;border-bottom:1px solid var(--border);
+}
+.drawer-title{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--accent);}
+.drawer-close{
+  width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;font-size:1rem;color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.drawer-close:hover{border-color:var(--muted);color:var(--text);}
+.drawer-body{padding:16px;flex:1;}
+
+/* screens */
+.screen{display:none;width:100%;max-width:440px;flex-direction:column;align-items:center;}
+.screen.active{display:flex;}
+
+/* card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:24px;width:100%;margin-bottom:14px;}
+.card-label{font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+
+/* inputs */
+.field-label{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+.input-row{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:4px 4px 4px 14px;transition:border-color .2s;margin-bottom:13px;}
+.input-row:focus-within{border-color:var(--accent);}
+.input-row input{background:none;border:none;outline:none;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:.95rem;width:100%;padding:9px 0;}
+input::-webkit-inner-spin-button{-webkit-appearance:none}
+.input-suffix{color:var(--accent);font-size:.83rem;padding-right:13px;font-weight:500;flex-shrink:0;}
+
+/* buttons */
+.btn{font-family:'DM Mono',monospace;border:none;cursor:pointer;border-radius:12px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.btn-primary{background:var(--accent);color:#0e0e10;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:500;}
+.btn-primary:hover{filter:brightness(.9);}
+.btn-primary:active{transform:scale(.97);}
+.btn-primary:disabled{background:#252530;color:var(--muted);cursor:not-allowed;filter:none;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
+.btn-ghost:hover{border-color:var(--muted);color:var(--text);}
+.btn-danger{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
+.btn-danger:hover{border-color:var(--danger);color:var(--danger);}
+
+/* settings pill */
+.settings-pill{display:flex;align-items:center;gap:12px;background:var(--surface);
+  border:1px solid var(--border);border-radius:40px;padding:7px 16px;
+  margin-bottom:16px;width:100%;justify-content:center;cursor:pointer;transition:border-color .2s;}
+.settings-pill:hover{border-color:var(--accent);}
+.pill-item{font-size:.68rem;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.pill-val{color:var(--accent);font-weight:500;}
+.pill-sep{width:1px;height:13px;background:var(--border);}
+.pill-edit{font-size:.52rem;letter-spacing:.13em;color:var(--muted);opacity:.6;}
+
+/* drink type cards */
+.drink-types{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:14px;}
+.drink-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  display:flex;align-items:center;padding:14px 16px;gap:12px;
+  position:relative;overflow:hidden;
+}
+.drink-card-info{flex:1;min-width:0;}
+.drink-logo-wrap {
+  width:42px;height:42px;border-radius:10px;border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;
+}
+.drink-logo-img {
+  width:32px;height:32px;object-fit:contain;opacity:0;
+  transition:opacity .3s ease;
+}
+.drink-logo-emoji-fb {
+  font-size:1.4rem;display:flex;align-items:center;justify-content:center;
+}
+.drink-card-name{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--text);
+  margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.drink-card-price{font-size:.65rem;color:var(--muted);}
+.drink-count{
+  font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:var(--accent);
+  min-width:42px;text-align:center;transition:transform .12s cubic-bezier(.34,1.56,.64,1);
+}
+.drink-count.bump{transform:scale(1.25);}
+.drink-add-btn{
+  width:52px;height:52px;border-radius:12px;background:var(--accent);
+  color:#0e0e10;font-size:1.4rem;border:none;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;position:relative;overflow:hidden;
+}
+.drink-add-btn:disabled{background:#252530;color:var(--muted);cursor:not-allowed;}
+.drink-add-btn:not(:disabled):hover{filter:brightness(.9);}
+.drink-add-btn:not(:disabled):active{transform:scale(.94);}
+.drink-cooldown-bar{position:absolute;left:0;bottom:0;height:3px;width:0%;background:rgba(232,201,122,.5);}
+
+/* add drink form */
+.add-drink-form{background:var(--surface);border:1px dashed var(--border);border-radius:16px;
+  padding:18px;width:100%;margin-bottom:14px;}
+.add-drink-row{display:flex;gap:8px;align-items:flex-end;}
+.add-drink-row .input-row{flex:1;margin-bottom:0;}
+.add-drink-row .input-row.price-field{flex:0 0 110px;}
+
+/* summary */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-box{background:var(--surface2);border-radius:12px;padding:12px 14px;border:1px solid var(--border);}
+.stat-label{font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.stat-value{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--text);}
+.stat-value.hi{color:var(--accent);font-size:1.7rem;}
+.total-line{border-top:1px solid var(--border);padding-top:15px;display:flex;justify-content:space-between;align-items:center;}
+.total-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.total-value{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:var(--success);}
+
+/* timeline list */
+.evt-list{display:flex;flex-direction:column;}
+.evt-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);animation:slideIn .22s ease;}
+.evt-item:last-child{border-bottom:none;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.evt-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent);flex-shrink:0;}
+.evt-num{font-family:'Fraunces',serif;font-size:.88rem;font-weight:600;color:var(--accent);width:24px;flex-shrink:0;}
+.evt-name{font-size:.72rem;color:var(--text);flex:1;}
+.evt-time{font-size:.6rem;color:var(--muted);flex-shrink:0;}
+.evt-empty{font-size:.68rem;color:var(--muted);text-align:center;padding:14px 0;letter-spacing:.1em;}
+
+/* history */
+.history-item{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:18px;width:100%;margin-bottom:12px;cursor:pointer;transition:border-color .2s;}
+.history-item:hover{border-color:var(--accent);}
+.history-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.history-date{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;color:var(--text);}
+.history-location{font-size:.65rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;}
+.history-total{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--success);}
+.history-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.history-tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
+  padding:3px 10px;font-size:.6rem;color:var(--muted);}
+.history-tag span{color:var(--accent);}
+.history-empty{font-size:.72rem;color:var(--muted);text-align:center;padding:40px 0;letter-spacing:.1em;line-height:2;}
+
+/* history detail */
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);
+  font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  cursor:pointer;padding:0;margin-bottom:20px;transition:color .2s;}
+.back-btn:hover{color:var(--text);}
+
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:flex-end;justify-content:center;padding:0;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;
+  padding:28px 24px 40px;width:100%;max-width:500px;}
+.modal-title{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;margin-bottom:20px;}
+.modal-actions{display:flex;gap:10px;margin-top:6px;}
+.btn-modal-save{flex:1;height:48px;border-radius:12px;}
+.btn-modal-cancel{height:48px;padding:0 18px;border-radius:12px;}
+
+/* close-evening modal */
+.close-summary{background:var(--surface2);border-radius:14px;padding:16px;margin-bottom:16px;}
+.close-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.75rem;}
+.close-row-label{color:var(--muted);}
+.close-row-val{color:var(--text);}
+.close-row-val.gold{color:var(--accent);}
+.close-row-val.green{color:var(--success);font-weight:500;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-spacer"></div>
+  <div>
+    <h1>Drinks</h1>
+    <p class="subtitle" style="margin-bottom:0">Bestellübersicht</p>
+  </div>
+  <button class="burger-btn" onclick="openDrawer()" aria-label="Verlauf">
+    <div class="burger-line"></div>
+    <div class="burger-line"></div>
+    <div class="burger-line"></div>
+  </button>
+</div>
+<div style="height:28px"></div>
+
+<!-- DRAWER -->
+<div class="drawer-bg" id="drawerBg" onclick="closeDrawer(event)">
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">Verlauf</div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div id="history-list-view"></div>
+      <div id="history-detail-view" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ MAIN SCREEN ════════════════════════════════ -->
+<div class="screen active" id="screen-main">
+
+  <!-- settings pill -->
+  <div class="settings-pill" onclick="openModal('modal-settings')">
+    <div class="pill-item"><span>🤝</span><span id="pill-tip" class="pill-val">10 %</span><span>Trinkgeld</span></div>
+    <div class="pill-sep"></div>
+    <span class="pill-edit">bearbeiten ✎</span>
+  </div>
+
+  <!-- drink type list -->
+  <div class="drink-types" id="drinkTypes"></div>
+
+  <!-- add drink form -->
+  <div class="add-drink-form">
+    <div class="card-label">Neues Getränk hinzufügen</div>
+    <div class="add-drink-row">
+      <div class="input-row" style="margin-bottom:0;flex:1">
+        <input type="text" id="new-name" placeholder="Name (z.B. Bier)" style="background:none;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;width:100%;padding:9px 0;">
+      </div>
+      <div class="input-row price-field" style="margin-bottom:0;">
+        <input type="text" inputmode="decimal" id="new-price" placeholder="0,00" style="background:none;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;width:100%;padding:9px 0;">
+        <span class="input-suffix">€</span>
+      </div>
+      <button class="btn btn-primary" style="height:44px;padding:0 14px;white-space:nowrap;border-radius:12px;" onclick="addDrinkType()">+</button>
+    </div>
+  </div>
+
+  <!-- summary -->
+  <div class="card">
+    <div class="card-label">Abrechnung</div>
+    <div class="summary-grid">
+      <div class="stat-box"><div class="stat-label">Gesamt Drinks</div><div class="stat-value hi" id="sumCount">0</div></div>
+      <div class="stat-box"><div class="stat-label">Subtotal</div><div class="stat-value" id="sumSubtotal">€ 0,00</div></div>
+      <div class="stat-box"><div class="stat-label">Trinkgeld</div><div class="stat-value" id="sumTip">€ 0,00</div></div>
+      <div class="stat-box"><div class="stat-label">Trinkgeld %</div><div class="stat-value" id="sumTipPct">10 %</div></div>
+    </div>
+    <div class="total-line">
+      <div class="total-label">Gesamt</div>
+      <div class="total-value" id="sumTotal">€ 0,00</div>
+    </div>
+  </div>
+
+  <!-- event log -->
+  <div class="card">
+    <div class="card-label">Bestellverlauf</div>
+    <div class="evt-list" id="evtList"><div class="evt-empty">noch keine Getränke bestellt</div></div>
+  </div>
+
+  <!-- actions -->
+  <button class="btn btn-primary" style="width:100%;height:56px;border-radius:14px;font-size:.8rem;letter-spacing:.15em;margin-bottom:10px;" onclick="openCloseEvening()">
+    🌙 &nbsp;Abend abschließen
+  </button>
+  <button class="btn btn-danger" style="width:100%;height:42px;border-radius:12px;" onclick="resetSession()">
+    ↺ &nbsp;Session zurücksetzen
+  </button>
+</div>
+
+<!-- (history now in drawer) -->
+
+<!-- ════════════════════════════════ MODALS ════════════════════════════════ -->
+
+<!-- Settings modal -->
+<div class="modal-bg" id="modal-settings">
+  <div class="modal">
+    <div class="modal-title">Einstellungen</div>
+    <div class="field-label">Trinkgeld</div>
+    <div class="input-row">
+      <input type="text" inputmode="decimal" id="m-tip" placeholder="0">
+      <span class="input-suffix">%</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-settings')">Abbrechen</button>
+      <button class="btn btn-primary btn-modal-save" onclick="saveSettings()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Close Evening modal -->
+<div class="modal-bg" id="modal-close">
+  <div class="modal">
+    <div class="modal-title">Abend abschließen</div>
+    <div class="close-summary" id="closeSummary"></div>
+    <div class="field-label">Ort / Bar</div>
+    <div class="input-row">
+      <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" style="background:none;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;width:100%;padding:9px 0;">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-close')">Abbrechen</button>
+      <button class="btn btn-primary btn-modal-save" onclick="saveEvening()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let tipPct = 10;
+let drinkTypes = []; // [{id, name, price, count, cooldown}]
+let eventLog  = []; // [{typeId, typeName, price, time}]
+let history   = []; // saved evenings
+
+const COOLDOWN = 2000;
+const LS_KEY   = 'drinks_app_v1';
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function save() {
+  localStorage.setItem(LS_KEY, JSON.stringify({ tipPct, drinkTypes, eventLog, history }));
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_KEY));
+    if (!d) return;
+    tipPct     = d.tipPct     ?? 10;
+    drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
+    eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
+    history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), drinks: h.drinks, events: (h.events||[]).map(e=>({...e,time:new Date(e.time)})) }));
+  } catch(e) {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt     = n  => '€ ' + n.toFixed(2).replace(/\./g, ',');
+const timeStr = d  => d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+const dateStr = d  => d.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+const dateShort = d => d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+let nextId = Date.now();
+function uid() { return ++nextId; }
+
+function totalCount()    { return drinkTypes.reduce((s,d) => s + d.count, 0); }
+function totalSubtotal() { return drinkTypes.reduce((s,d) => s + d.count * d.price, 0); }
+function totalTip()      { return totalSubtotal() * tipPct / 100; }
+function totalGrand()    { return totalSubtotal() + totalTip(); }
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function openDrawer() {
+  renderHistory();
+  document.getElementById('drawerBg').classList.add('open');
+}
+function closeDrawer(e) {
+  if (e && e.target !== document.getElementById('drawerBg')) return;
+  document.getElementById('drawerBg').classList.remove('open');
+}
+
+// ── Screen nav (kept for saveEvening redirect) ────────────────────────────────
+function showScreen() {} // no-op, single screen now
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  if (id === 'modal-settings') document.getElementById('m-tip').value = tipPct;
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveSettings() {
+  tipPct = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
+  closeModal('modal-settings');
+  updatePill();
+  renderSummary();
+  save();
+}
+
+// ── Pill ──────────────────────────────────────────────────────────────────────
+function updatePill() {
+  document.getElementById('pill-tip').textContent = tipPct.toFixed(0) + ' %';
+  document.getElementById('sumTipPct').textContent = tipPct.toFixed(0) + ' %';
+}
+
+// ── Brand Logo Database ───────────────────────────────────────────────────────
+const BRAND_DB = [
+  // ── Österreichische Biere ──
+  { keys: ['gösser','gosser'],          domain: 'goesser.at',          emoji: '🍺', color: '#1a5c1a' },
+  { keys: ['schwechater'],              domain: 'schwechater.at',       emoji: '🍺', color: '#c8a020' },
+  { keys: ['ottakringer'],              domain: 'ottakringer.at',       emoji: '🍺', color: '#c8372d' },
+  { keys: ['zipfer'],                   domain: 'zipfer.at',            emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['puntigamer'],               domain: 'puntigamer.at',        emoji: '🍺', color: '#c8372d' },
+  { keys: ['wieselburger'],             domain: 'wieselburger.at',      emoji: '🍺', color: '#e8a020' },
+  { keys: ['hirter'],                   domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['murauer'],                  domain: null,                   emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['kaiser'],                   domain: null,                   emoji: '🍺', color: '#c8a020' },
+  { keys: ['obertrummer'],              domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['schwarz','schwarz bier'],   domain: null,                   emoji: '🍺', color: '#1a1a1a' },
+  { keys: ['stiegl'],                   domain: 'stiegl.at',            emoji: '🍺', color: '#c8372d' },
+  { keys: ['augustinerkeller'],         domain: null,                   emoji: '🍺', color: '#c8920a' },
+  { keys: ['schwadorf'],                domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['villacher'],                domain: null,                   emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['grieskirchner'],            domain: null,                   emoji: '🍺', color: '#c8a020' },
+  { keys: ['gmundner'],                 domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['schremser'],                domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['zwettler'],                 domain: null,                   emoji: '🍺', color: '#c8a020' },
+  { keys: ['freistädter'],              domain: null,                   emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['hirt','hirtenbräu'],        domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  // ── Bayerische Biere ──
+  { keys: ['tegernseer'],               domain: 'tegernseer.de',        emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['paulaner'],                 domain: 'paulaner.de',          emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['erdinger'],                 domain: 'erdinger.de',          emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['augustiner'],               domain: 'augustiner-braeu.de',  emoji: '🍺', color: '#c8920a' },
+  { keys: ['weihenstephan','weihenstephaner'], domain: 'weihenstephaner.de', emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['hofbräu','hofbrau'],        domain: 'hofbraeu-muenchen.de', emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['löwenbräu','lowenbrau'],    domain: 'loewenbraeu.de',       emoji: '🍺', color: '#c8a020' },
+  { keys: ['franziskaner'],             domain: 'franziskaner.de',      emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['andechs'],                  domain: 'andechs.de',           emoji: '🍺', color: '#c8372d' },
+  { keys: ['ayinger'],                  domain: 'ayinger.de',           emoji: '🍺', color: '#2d6a1f' },
+  // ── Internationale Biere ──
+  { keys: ['heineken'],                 domain: 'heineken.com',         emoji: '🍺', color: '#1a7a2e' },
+  { keys: ['budweiser','bud'],          domain: 'budweiser.com',        emoji: '🍺', color: '#c8372d' },
+  { keys: ['corona'],                   domain: 'corona.com',           emoji: '🍺', color: '#d4c020' },
+  { keys: ['stella artois','stella'],   domain: 'stellaartois.com',     emoji: '🍺', color: '#b8960a' },
+  { keys: ['guinness'],                 domain: 'guinness.com',         emoji: '🍺', color: '#1a1a1a' },
+  { keys: ['becks',"beck's"],           domain: 'becks.de',             emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['warsteiner'],               domain: 'warsteiner.de',        emoji: '🍺', color: '#c8372d' },
+  { keys: ['krombacher'],               domain: 'krombacher.de',        emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['bitburger'],                domain: 'bitburger.de',         emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['leffe'],                    domain: 'leffe.com',            emoji: '🍺', color: '#8a4a10' },
+  { keys: ['hoegaarden'],               domain: 'hoegaarden.com',       emoji: '🍺', color: '#d4c020' },
+  { keys: ['affligem'],                 domain: 'affligem.com',         emoji: '🍺', color: '#c8a020' },
+  { keys: ['chimay'],                   domain: 'chimay.com',           emoji: '🍺', color: '#c8372d' },
+  { keys: ['duvel'],                    domain: 'duvel.com',            emoji: '🍺', color: '#c8a020' },
+  { keys: ['peroni'],                   domain: 'peroni.com',           emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['moretti'],                  domain: 'birramoretti.com',     emoji: '🍺', color: '#c8372d' },
+  { keys: ['carlsberg'],                domain: 'carlsberg.com',        emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['tuborg'],                   domain: 'tuborg.com',           emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['amstel'],                   domain: 'amstel.com',           emoji: '🍺', color: '#c8372d' },
+  // ── Wein & Sekt ──
+  { keys: ['sekt','prosecco','freixenet'], domain: 'freixenet.com',     emoji: '🥂', color: '#c8a020' },
+  { keys: ['moet',"moët"],              domain: 'moet.com',             emoji: '🥂', color: '#c8a020' },
+  { keys: ['wein','wine','rotwein','weißwein','rosé'], domain: null,    emoji: '🍷', color: '#7a1a2e' },
+  // ── Spirits ──
+  { keys: ['aperol'],                   domain: 'aperol.com',           emoji: '🍊', color: '#e85a10' },
+  { keys: ['campari'],                  domain: 'campari.com',          emoji: '🍷', color: '#c8372d' },
+  { keys: ['jägermeister','jagermeister','jäger'], domain: 'jagermeister.com', emoji: '🦌', color: '#d4920a' },
+  { keys: ['jack daniel',"jack daniel's"], domain: 'jackdaniels.com',   emoji: '🥃', color: '#2a1a0a' },
+  { keys: ['jameson'],                  domain: 'jamesonwhiskey.com',   emoji: '🥃', color: '#5a3a10' },
+  { keys: ['bacardi'],                  domain: 'bacardi.com',          emoji: '🍹', color: '#c8372d' },
+  { keys: ['absolut'],                  domain: 'absolut.com',          emoji: '🫗', color: '#1a5fa8' },
+  { keys: ['red bull','redbull'],       domain: 'redbull.com',          emoji: '🐂', color: '#c8c820' },
+  { keys: ['coca cola','coca-cola','coke','cola'], domain: 'coca-cola.com', emoji: '🥤', color: '#c8372d' },
+  { keys: ['hugo'],                     domain: null,                   emoji: '🍸', color: '#5a9a4a' },
+  { keys: ['spritz','spritzer'],        domain: null,                   emoji: '🍸', color: '#e85a10' },
+  { keys: ['bier','beer'],              domain: null,                   emoji: '🍺', color: '#c8920a' },
+];
+
+function getBrandInfo(name) {
+  const lower = name.toLowerCase().trim();
+  for (const brand of BRAND_DB) {
+    for (const key of brand.keys) {
+      if (lower.includes(key) || key.includes(lower)) return brand;
+    }
+  }
+  return null;
+}
+
+function logoHtml(name) {
+  const brand = getBrandInfo(name);
+  const emoji  = brand ? brand.emoji : '🥃';
+  const color  = brand ? brand.color : '#2e2e38';
+  const domain = brand ? brand.domain : null;
+  const id     = 'logo-' + Math.random().toString(36).slice(2);
+
+  if (domain) {
+    const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+    return `
+      <div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
+        <img id="${id}" class="drink-logo-img" src="${url}" alt="${esc(name)}"
+          onload="checkLogo(this,'${id}-fb')"
+          onerror="this.style.display='none';document.getElementById('${id}-fb').style.display='flex'">
+        <div id="${id}-fb" class="drink-logo-emoji-fb" style="display:none">${emoji}</div>
+      </div>`;
+  }
+  return `<div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
+    <div class="drink-logo-emoji-fb">${emoji}</div>
+  </div>`;
+}
+
+// ── Drink Types ───────────────────────────────────────────────────────────────
+function addDrinkType() {
+  const nameEl  = document.getElementById('new-name');
+  const priceEl = document.getElementById('new-price');
+  const name  = nameEl.value.trim();
+  const price = parseFloat((priceEl.value || '0').replace(',', '.')) || 0;
+  if (!name) { nameEl.focus(); return; }
+  drinkTypes.push({ id: uid(), name, price, count: 0, cooldown: false, timer: null });
+  nameEl.value = '';
+  priceEl.value = '';
+  renderDrinkTypes();
+  save();
+}
+
+function removeDrinkType(id) {
+  drinkTypes = drinkTypes.filter(d => d.id !== id);
+  eventLog   = eventLog.filter(e => e.typeId !== id);
+  renderDrinkTypes();
+  renderSummary();
+  renderEventLog();
+  save();
+}
+
+function addOne(id) {
+  const dt = drinkTypes.find(d => d.id === id);
+  if (!dt || dt.cooldown) return;
+
+  dt.count++;
+  eventLog.push({ typeId: id, typeName: dt.name, price: dt.price, time: new Date() });
+
+  // update + bump animation
+  const countEl = document.getElementById('dc-count-' + id);
+  if (countEl) {
+    countEl.textContent = dt.count;
+    countEl.classList.remove('bump');
+    void countEl.offsetWidth;
+    countEl.classList.add('bump');
+    setTimeout(() => countEl.classList.remove('bump'), 200);
+  }
+
+  // cooldown
+  dt.cooldown = true;
+  const btn = document.getElementById('dc-btn-' + id);
+  const bar = document.getElementById('dc-bar-' + id);
+  if (btn) btn.disabled = true;
+  if (bar) {
+    bar.style.transition = 'none'; bar.style.width = '0%';
+    void bar.offsetWidth;
+    bar.style.transition = `width ${COOLDOWN}ms linear`;
+    bar.style.width = '100%';
+  }
+  if (dt.timer) clearTimeout(dt.timer);
+  dt.timer = setTimeout(() => {
+    dt.cooldown = false;
+    if (btn) { btn.disabled = false; }
+    if (bar) { bar.style.transition = 'width .2s ease'; bar.style.width = '0%'; }
+  }, COOLDOWN);
+
+  renderSummary();
+  renderEventLog();
+  save();
+}
+
+function renderDrinkTypes() {
+  const wrap = document.getElementById('drinkTypes');
+  if (drinkTypes.length === 0) {
+    wrap.innerHTML = '<div style="font-size:.7rem;color:var(--muted);text-align:center;padding:10px 0 4px;">Füge unten ein Getränk hinzu ↓</div>';
+    return;
+  }
+  wrap.innerHTML = drinkTypes.map(dt => `
+    <div class="drink-card">
+      ${logoHtml(dt.name)}
+      <div class="drink-card-info">
+        <div class="drink-card-name">${esc(dt.name)}</div>
+        <div class="drink-card-price">${fmt(dt.price)} / Stück</div>
+      </div>
+      <div class="drink-count" id="dc-count-${dt.id}">${dt.count}</div>
+      <button class="drink-add-btn" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
+        <div class="drink-cooldown-bar" id="dc-bar-${dt.id}" style="width:${dt.cooldown?'100%':'0%'}"></div>
+        <span style="position:relative;z-index:1">+</span>
+      </button>
+      <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 0 0 8px;line-height:1;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>`).join('');
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────────
+function renderSummary() {
+  document.getElementById('sumCount').textContent    = totalCount();
+  document.getElementById('sumSubtotal').textContent = fmt(totalSubtotal());
+  document.getElementById('sumTip').textContent      = fmt(totalTip());
+  document.getElementById('sumTotal').textContent    = fmt(totalGrand());
+}
+
+// ── Event Log ─────────────────────────────────────────────────────────────────
+function renderEventLog() {
+  const el = document.getElementById('evtList');
+  if (eventLog.length === 0) {
+    el.innerHTML = '<div class="evt-empty">noch keine Getränke bestellt</div>';
+    return;
+  }
+  el.innerHTML = [...eventLog].reverse().map((e, i) => `
+    <div class="evt-item">
+      <div class="evt-dot"></div>
+      <div class="evt-num">#${eventLog.length - i}</div>
+      <div class="evt-name">${esc(e.typeName)}</div>
+      <div class="evt-time">${timeStr(e.time)}</div>
+    </div>`).join('');
+}
+
+// ── Close Evening ─────────────────────────────────────────────────────────────
+function openCloseEvening() {
+  if (totalCount() === 0) { alert('Noch keine Getränke bestellt!'); return; }
+  const el = document.getElementById('closeSummary');
+  let rows = drinkTypes.filter(d => d.count > 0).map(d =>
+    `<div class="close-row"><span class="close-row-label">${esc(d.name)}</span><span class="close-row-val gold">${d.count}× ${fmt(d.price)}</span></div>`).join('');
+  rows += `<div class="close-row" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+    <span class="close-row-label">Subtotal</span><span class="close-row-val">${fmt(totalSubtotal())}</span></div>
+  <div class="close-row"><span class="close-row-label">Trinkgeld (${tipPct}%)</span><span class="close-row-val">${fmt(totalTip())}</span></div>
+  <div class="close-row"><span class="close-row-label" style="color:var(--text);font-weight:500">Gesamt</span><span class="close-row-val green">${fmt(totalGrand())}</span></div>`;
+  el.innerHTML = rows;
+  document.getElementById('m-location').value = '';
+  openModal('modal-close');
+}
+
+function saveEvening() {
+  const loc = document.getElementById('m-location').value.trim() || 'Unbekannt';
+  const session = {
+    id: uid(),
+    date: new Date(),
+    location: loc,
+    tipPct,
+    drinks: drinkTypes.filter(d => d.count > 0).map(d => ({ name: d.name, price: d.price, count: d.count })),
+    events: [...eventLog],
+    subtotal: totalSubtotal(),
+    tipAmt: totalTip(),
+    total: totalGrand(),
+  };
+  history.unshift(session);
+  closeModal('modal-close');
+  resetSessionData();
+  save();
+  openDrawer();
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetSession() {
+  if (totalCount() === 0 && drinkTypes.length === 0) return;
+  if (!confirm('Session zurücksetzen? Alle Getränke werden gelöscht.')) return;
+  resetSessionData();
+  save();
+}
+
+function resetSessionData() {
+  drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); dt.count = 0; dt.cooldown = false; });
+  eventLog = [];
+  renderDrinkTypes();
+  renderSummary();
+  renderEventLog();
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const listView = document.getElementById('history-list-view');
+  const detailView = document.getElementById('history-detail-view');
+  detailView.style.display = 'none';
+  listView.style.display = 'block';
+
+  if (history.length === 0) {
+    listView.innerHTML = '<div class="history-empty">Noch keine gespeicherten Abende.<br>Schließe einen Abend ab um ihn hier zu sehen.</div>';
+    return;
+  }
+  listView.innerHTML = history.map(h => `
+    <div class="history-item" onclick="showHistoryDetail(${h.id})">
+      <div class="history-header">
+        <div>
+          <div class="history-date">${dateStr(new Date(h.date))}</div>
+          <div class="history-location">📍 ${esc(h.location)}</div>
+        </div>
+        <div class="history-total">${fmt(h.total)}</div>
+      </div>
+      <div class="history-tags">
+        ${h.drinks.map(d => `<div class="history-tag">${esc(d.name)} <span>×${d.count}</span></div>`).join('')}
+        <div class="history-tag">Tip <span>${h.tipPct}%</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function showHistoryDetail(id) {
+  const h = history.find(x => x.id === id);
+  if (!h) return;
+  const listView   = document.getElementById('history-list-view');
+  const detailView = document.getElementById('history-detail-view');
+  listView.style.display = 'none';
+  detailView.style.display = 'block';
+
+  const eventsHtml = (h.events || []).length === 0 ? '' : `
+    <div class="card" style="margin-top:0">
+      <div class="card-label">Bestellverlauf</div>
+      <div class="evt-list">
+        ${[...h.events].reverse().map((e,i) => `
+          <div class="evt-item">
+            <div class="evt-dot"></div>
+            <div class="evt-num">#${h.events.length - i}</div>
+            <div class="evt-name">${esc(e.typeName)}</div>
+            <div class="evt-time">${timeStr(new Date(e.time))}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  detailView.innerHTML = `
+    <button class="back-btn" onclick="renderHistory()">← Zurück</button>
+    <div class="card" style="margin-top:0">
+      <div style="margin-bottom:14px">
+        <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:4px">${dateStr(new Date(h.date))}</div>
+        <div style="font-size:.72rem;color:var(--muted)">📍 ${esc(h.location)}</div>
+      </div>
+      ${h.drinks.map(d => `
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem;">
+          <span style="color:var(--text)">${esc(d.name)}</span>
+          <span style="color:var(--muted)">${d.count}× ${fmt(d.price)} = <span style="color:var(--accent)">${fmt(d.count*d.price)}</span></span>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:10px 0 6px;font-size:.75rem;">
+        <span style="color:var(--muted)">Subtotal</span><span style="color:var(--text)">${fmt(h.subtotal)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0 10px;font-size:.75rem;border-bottom:1px solid var(--border);">
+        <span style="color:var(--muted)">Trinkgeld (${h.tipPct}%)</span><span style="color:var(--text)">${fmt(h.tipAmt)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:14px 0 0;align-items:center;">
+        <span style="font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Gesamt</span>
+        <span style="font-family:'Fraunces',serif;font-size:1.9rem;font-weight:900;color:var(--success)">${fmt(h.total)}</span>
+      </div>
+    </div>
+    ${eventsHtml}
+    <button class="btn btn-danger" style="width:100%;height:42px;border-radius:12px;margin-top:4px;" onclick="deleteHistory(${h.id})">
+      🗑 &nbsp;Abend löschen
+    </button>`;
+}
+
+function deleteHistory(id) {
+  if (!confirm('Diesen Abend wirklich löschen?')) return;
+  history = history.filter(h => h.id !== id);
+  save();
+  renderHistory();
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Logo Globe Detection ──────────────────────────────────────────────────────
+function checkLogo(img, fallbackId) {
+  // Draw to canvas and check if it's the generic grey globe (very uniform color)
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 16;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, 16, 16);
+    const d = ctx.getImageData(0, 0, 16, 16).data;
+    // Count unique colors — globe has very few, real logos have many
+    const colors = new Set();
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i+3] > 10) colors.add(`${Math.round(d[i]/32)},${Math.round(d[i+1]/32)},${Math.round(d[i+2]/32)}`);
+    }
+    if (colors.size < 6) {
+      // Looks like generic icon — show emoji
+      img.style.display = 'none';
+      document.getElementById(fallbackId).style.display = 'flex';
+    } else {
+      img.style.opacity = '1';
+    }
+  } catch(e) {
+    img.style.opacity = '1'; // CORS issue — just show it
+  }
+}
+
+// ── Service Worker ────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+load();
+updatePill();
+renderDrinkTypes();
+renderSummary();
+renderEventLog();
+</script>
+</body>
+</html>
