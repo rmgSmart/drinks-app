@@ -4,8 +4,8 @@
   "description": "Getränke & Trinkgeld Tracker",
   "start_url": "/drinks-app/",
   "display": "standalone",
-  "background_color": "#0e0e10",
-  "theme_color": "#0e0e10",
+  "background_color": "#faf6f0",
+  "theme_color": "#faf6f0",
   "orientation": "portrait",
   "icons": [
     {
