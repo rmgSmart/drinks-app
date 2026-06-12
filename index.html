@@ -286,12 +286,6 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
     ↩ &nbsp;Letztes Getränk rückgängig
   </button>
 
-  <!-- location presets -->
-  <div class="card" id="presetCard" style="display:none;padding:16px 18px;">
-    <div class="card-label" style="margin-bottom:10px;">Preise übernehmen von</div>
-    <div class="chips" id="presetChips"></div>
-  </div>
-
   <!-- add drink form -->
   <div class="add-drink-form">
     <div class="card-label">Neues Getränk hinzufügen</div>
@@ -327,6 +321,12 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   <div class="card">
     <div class="card-label">Bestellverlauf</div>
     <div class="evt-list" id="evtList"><div class="evt-empty">noch keine Getränke bestellt</div></div>
+  </div>
+
+  <!-- location presets -->
+  <div class="card" id="presetCard" style="display:none;padding:16px 18px;">
+    <div class="card-label" style="margin-bottom:10px;">Preise übernehmen von</div>
+    <div class="chips" id="presetChips"></div>
   </div>
 
   <!-- actions -->
@@ -713,7 +713,7 @@ function saveEvening() {
   };
   history.unshift(session);
   closeModal('modal-close');
-  resetSessionData();
+  resetSessionData(false);
   save();
   renderPresets();
   openDrawer();
@@ -727,14 +727,15 @@ function resetSession() {
   save();
 }
 
-function resetSessionData() {
-  // Getränketypen bleiben erhalten (Favoriten) — nur Zähler & Verlauf zurücksetzen
-  drinkTypes.forEach(dt => {
-    if (dt.timer) clearTimeout(dt.timer);
-    dt.count = 0;
-    dt.cooldown = false;
-    dt.timer = null;
-  });
+function resetSessionData(keepTypes = true) {
+  drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); });
+  if (keepTypes) {
+    // Zähler zurücksetzen, Getränke als Favoriten behalten
+    drinkTypes.forEach(dt => { dt.count = 0; dt.cooldown = false; dt.timer = null; });
+  } else {
+    // Abend abgeschlossen → Liste leeren (Preise über Orts-Chips wiederholbar)
+    drinkTypes = [];
+  }
   eventLog = [];
   renderDrinkTypes();
   renderSummary();
