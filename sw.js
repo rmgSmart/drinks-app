@@ -1,6 +1,7 @@
-const CACHE = 'drinks-v1';
+const CACHE = 'drinks-v2';
 const FILES = [
-  './drink-counter.html',
+  './',
+  './index.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:wght@300;600;900&display=swap'
 ];
@@ -20,7 +21,27 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // App-Seite: erst Netz (damit Updates sofort ankommen), bei offline aus Cache
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(r => {
+        const copy = r.clone();
+        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        return r;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+  // Alles andere (Fonts, Icons): Cache zuerst, sonst Netz + nachträglich cachen
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    caches.match(e.request).then(cached =>
+      cached || fetch(e.request).then(r => {
+        if (r.ok && e.request.url.startsWith('http')) {
+          const copy = r.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+        }
+        return r;
+      })
+    )
   );
 });

@@ -270,6 +270,11 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   <!-- drink type list -->
   <div class="drink-types" id="drinkTypes"></div>
 
+  <!-- undo last drink -->
+  <button class="btn btn-ghost" id="undoBtn" style="width:100%;height:38px;border-radius:12px;margin-bottom:14px;display:none;" onclick="undoLast()">
+    ↩ &nbsp;Letztes Getränk rückgängig
+  </button>
+
   <!-- add drink form -->
   <div class="add-drink-form">
     <div class="card-label">Neues Getränk hinzufügen</div>
@@ -519,7 +524,7 @@ function logoHtml(name) {
     const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
     return `
       <div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
-        <img id="${id}" class="drink-logo-img" src="${url}" alt="${esc(name)}"
+        <img id="${id}" class="drink-logo-img" src="${url}" alt="${esc(name)}" crossorigin="anonymous"
           onload="checkLogo(this,'${id}-fb')"
           onerror="this.style.display='none';document.getElementById('${id}-fb').style.display='flex'">
         <div id="${id}-fb" class="drink-logo-emoji-fb" style="display:none">${emoji}</div>
@@ -593,6 +598,20 @@ function addOne(id) {
   save();
 }
 
+function undoLast() {
+  if (eventLog.length === 0) return;
+  const last = eventLog.pop();
+  const dt = drinkTypes.find(d => d.id === last.typeId);
+  if (dt && dt.count > 0) {
+    dt.count--;
+    const countEl = document.getElementById('dc-count-' + dt.id);
+    if (countEl) countEl.textContent = dt.count;
+  }
+  renderSummary();
+  renderEventLog();
+  save();
+}
+
 function renderDrinkTypes() {
   const wrap = document.getElementById('drinkTypes');
   if (drinkTypes.length === 0) {
@@ -625,6 +644,8 @@ function renderSummary() {
 
 // ── Event Log ─────────────────────────────────────────────────────────────────
 function renderEventLog() {
+  const ub = document.getElementById('undoBtn');
+  if (ub) ub.style.display = eventLog.length > 0 ? 'flex' : 'none';
   const el = document.getElementById('evtList');
   if (eventLog.length === 0) {
     el.innerHTML = '<div class="evt-empty">noch keine Getränke bestellt</div>';
@@ -676,15 +697,20 @@ function saveEvening() {
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
 function resetSession() {
-  if (totalCount() === 0 && drinkTypes.length === 0) return;
-  if (!confirm('Session zurücksetzen? Alle Getränke werden gelöscht.')) return;
+  if (totalCount() === 0 && eventLog.length === 0) return;
+  if (!confirm('Session zurücksetzen? Alle Zähler werden auf 0 gesetzt.\n(Deine Getränke bleiben als Favoriten erhalten.)')) return;
   resetSessionData();
   save();
 }
 
 function resetSessionData() {
-  drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); });
-  drinkTypes = [];
+  // Getränketypen bleiben erhalten (Favoriten) — nur Zähler & Verlauf zurücksetzen
+  drinkTypes.forEach(dt => {
+    if (dt.timer) clearTimeout(dt.timer);
+    dt.count = 0;
+    dt.cooldown = false;
+    dt.timer = null;
+  });
   eventLog = [];
   renderDrinkTypes();
   renderSummary();
@@ -810,6 +836,10 @@ function checkLogo(img, fallbackId) {
 // ── Service Worker ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
+}
+// Browser bitten, localStorage nicht automatisch zu räumen
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist();
 }
 
 load();
