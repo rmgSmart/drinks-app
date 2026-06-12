@@ -253,7 +253,7 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 <div class="drawer-bg" id="drawerBg" onclick="closeDrawer(event)">
   <div class="drawer" id="drawer">
     <div class="drawer-header">
-      <div class="drawer-title">Verlauf</div>
+      <div class="drawer-title">Menü</div>
       <button class="drawer-close" onclick="closeDrawer()">✕</button>
     </div>
     <div class="drawer-body">
@@ -262,6 +262,12 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
         <button class="btn btn-ghost" style="flex:1;height:38px;border-radius:10px;" onclick="document.getElementById('importFile').click()">⬇ &nbsp;Import</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
       </div>
+      <div id="preset-list-view">
+        <div class="card-label" style="margin-bottom:10px;">📍 Meine Orte</div>
+        <div id="presetList"></div>
+        <div class="card-label" style="margin:20px 0 10px;">Verlauf</div>
+      </div>
+      <div id="preset-edit-view" style="display:none;"></div>
       <div id="history-list-view"></div>
       <div id="history-detail-view" style="display:none;"></div>
     </div>
@@ -323,12 +329,6 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
     <div class="evt-list" id="evtList"><div class="evt-empty">noch keine Getränke bestellt</div></div>
   </div>
 
-  <!-- location presets -->
-  <div class="card" id="presetCard" style="display:none;padding:16px 18px;">
-    <div class="card-label" style="margin-bottom:10px;">Preise übernehmen von</div>
-    <div class="chips" id="presetChips"></div>
-  </div>
-
   <!-- actions -->
   <button class="btn btn-primary" style="width:100%;height:56px;border-radius:14px;font-size:.8rem;letter-spacing:.15em;margin-bottom:10px;" onclick="openCloseEvening()">
     🌙 &nbsp;Abend abschließen
@@ -387,7 +387,7 @@ const LS_KEY   = 'drinks_app_v1';
 
 // ── Persistence ───────────────────────────────────────────────────────────────
 function save() {
-  localStorage.setItem(LS_KEY, JSON.stringify({ tipPct, drinkTypes, eventLog, history }));
+  localStorage.setItem(LS_KEY, JSON.stringify({ tipPct, drinkTypes, eventLog, history, locationPresets }));
 }
 function load() {
   try {
@@ -397,6 +397,8 @@ function load() {
     drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
     eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
     history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), drinks: h.drinks, events: (h.events||[]).map(e=>({...e,time:new Date(e.time)})) }));
+    if (d.locationPresets == null) { locationPresets = []; migratePresets(); }  // einmalige Migration aus History
+    else locationPresets = d.locationPresets;
   } catch(e) {}
 }
 
@@ -416,6 +418,7 @@ function totalGrand()    { return totalSubtotal() + totalTip(); }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
 function openDrawer() {
+  renderPresetList();
   renderHistory();
   document.getElementById('drawerBg').classList.add('open');
 }
@@ -712,10 +715,10 @@ function saveEvening() {
     total: totalGrand(),
   };
   history.unshift(session);
+  upsertPreset(loc, session.drinks);
   closeModal('modal-close');
   resetSessionData(false);
   save();
-  renderPresets();
   openDrawer();
 }
 
@@ -748,6 +751,7 @@ function renderHistory() {
   const detailView = document.getElementById('history-detail-view');
   detailView.style.display = 'none';
   listView.style.display = 'block';
+  if (!_editPresetId) document.getElementById('preset-list-view').style.display = 'block';
 
   if (history.length === 0) {
     listView.innerHTML = '<div class="history-empty">Noch keine gespeicherten Abende.<br>Schließe einen Abend ab um ihn hier zu sehen.</div>';
@@ -776,6 +780,7 @@ function showHistoryDetail(id) {
   const detailView = document.getElementById('history-detail-view');
   listView.style.display = 'none';
   detailView.style.display = 'block';
+  document.getElementById('preset-list-view').style.display = 'none';
 
   const eventsHtml = (h.events || []).length === 0 ? '' : `
     <div class="card" style="margin-top:0">
@@ -824,7 +829,6 @@ function deleteHistory(id) {
   if (!confirm('Diesen Abend wirklich löschen?')) return;
   history = history.filter(h => h.id !== id);
   save();
-  renderPresets();
   renderHistory();
 }
 
@@ -879,29 +883,60 @@ setInterval(renderPace, 30000);
 
 // ── Location-Presets & Orts-Vorschläge ────────────────────────────────────────
 let _recentLocs = [];
+let locationPresets = [];
+let _editPresetId = null;
+const INP = "background:none;border:none;outline:none;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;width:100%;padding:8px 0;";
+
 function recentLocations() {
-  const seen = [];
+  const seen = locationPresets.map(p => p.name);
   for (const h of history) {
     const l = (h.location || '').trim();
-    if (l && l !== 'Unbekannt' && !seen.includes(l)) seen.push(l);
-    if (seen.length >= 6) break;
+    if (l && l !== 'Unbekannt' && !seen.some(s => s.toLowerCase() === l.toLowerCase())) seen.push(l);
   }
-  return seen;
+  return seen.slice(0, 6);
 }
-function renderPresets() {
-  const card = document.getElementById('presetCard');
-  const el   = document.getElementById('presetChips');
-  _recentLocs = recentLocations();
-  if (_recentLocs.length === 0) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
-  el.innerHTML = _recentLocs.map((l, i) =>
-    `<button class="chip" onclick="loadLocationPreset(${i})">📍 ${esc(l)}</button>`).join('');
+function pickLocation(i) {
+  document.getElementById('m-location').value = _recentLocs[i];
 }
-function loadLocationPreset(i) {
-  const loc = _recentLocs[i];
-  const h = history.find(x => x.location === loc);
-  if (!h) return;
-  for (const d of h.drinks) {
+
+function upsertPreset(loc, drinks) {
+  const name = (loc || '').trim();
+  if (!name || name === 'Unbekannt' || !drinks || drinks.length === 0) return;
+  let p = locationPresets.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if (!p) { p = { id: uid(), name, drinks: [] }; locationPresets.push(p); }
+  for (const d of drinks) {
+    const ex = p.drinks.find(x => x.name.toLowerCase() === d.name.toLowerCase());
+    if (ex) ex.price = d.price;
+    else p.drinks.push({ name: d.name, price: d.price });
+  }
+}
+function migratePresets() {
+  for (const h of [...history].reverse()) upsertPreset(h.location, h.drinks);
+}
+
+function renderPresetList() {
+  const el = document.getElementById('presetList');
+  document.getElementById('preset-edit-view').style.display = 'none';
+  document.getElementById('preset-list-view').style.display = 'block';
+  if (locationPresets.length === 0) {
+    el.innerHTML = '<div class="evt-empty" style="padding:10px 0;">Wird automatisch angelegt, sobald du einen Abend mit Ort abschließt.</div>';
+    return;
+  }
+  el.innerHTML = locationPresets.map(p => `
+    <div class="history-item" style="display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;cursor:pointer;min-width:0;" onclick="openPresetEditor(${p.id})">
+        <div class="history-location" style="font-size:.85rem;">📍 ${esc(p.name)}</div>
+        <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${p.drinks.length} Getränk${p.drinks.length === 1 ? '' : 'e'} · antippen zum Bearbeiten ✎</div>
+      </div>
+      <button class="btn btn-primary" style="height:34px;padding:0 14px;border-radius:10px;font-size:.62rem;flex-shrink:0;" onclick="loadPreset(${p.id})">↧ Laden</button>
+    </div>`).join('');
+}
+
+function loadPreset(id) {
+  const p = locationPresets.find(x => x.id === id);
+  if (!p) return;
+  for (const d of p.drinks) {
+    if (!String(d.name).trim()) continue;
     const ex = drinkTypes.find(t => t.name.toLowerCase() === d.name.toLowerCase());
     if (ex) ex.price = d.price;
     else drinkTypes.push({ id: uid(), name: d.name, price: d.price, count: 0, cooldown: false, timer: null });
@@ -909,9 +944,75 @@ function loadLocationPreset(i) {
   renderDrinkTypes();
   renderSummary();
   save();
+  document.getElementById('drawerBg').classList.remove('open');
 }
-function pickLocation(i) {
-  document.getElementById('m-location').value = _recentLocs[i];
+
+function openPresetEditor(id) {
+  _editPresetId = id;
+  document.getElementById('preset-list-view').style.display = 'none';
+  document.getElementById('history-list-view').style.display = 'none';
+  document.getElementById('history-detail-view').style.display = 'none';
+  renderPresetEditor();
+}
+function closePresetEditor() {
+  _editPresetId = null;
+  renderPresetList();
+  renderHistory();
+}
+function renderPresetEditor() {
+  const p = locationPresets.find(x => x.id === _editPresetId);
+  const view = document.getElementById('preset-edit-view');
+  if (!p) { closePresetEditor(); return; }
+  view.style.display = 'block';
+  view.innerHTML = `
+    <button class="btn btn-ghost" style="height:34px;padding:0 14px;border-radius:10px;margin-bottom:14px;" onclick="closePresetEditor()">← Zurück</button>
+    <div class="card" style="padding:16px 18px;">
+      <div class="card-label">Ort</div>
+      <div class="input-row"><input type="text" value="${esc(p.name)}" oninput="presetName(this.value)" style="${INP}"></div>
+      <div class="card-label" style="margin-top:6px;">Getränke &amp; Preise</div>
+      ${p.drinks.map((d, i) => `
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <div class="input-row" style="margin-bottom:0;flex:1;"><input type="text" value="${esc(d.name)}" placeholder="Name" oninput="presetDrink(${i},'name',this.value)" style="${INP}"></div>
+          <div class="input-row" style="margin-bottom:0;width:92px;flex-shrink:0;"><input type="text" inputmode="decimal" value="${String(d.price).replace('.', ',')}" placeholder="0,00" oninput="presetDrink(${i},'price',this.value)" style="${INP}"><span class="input-suffix">€</span></div>
+          <button class="btn btn-ghost" style="height:34px;width:34px;padding:0;border-radius:10px;color:var(--danger);flex-shrink:0;" onclick="removePresetDrink(${i})">✕</button>
+        </div>`).join('')}
+      <button class="btn btn-ghost" style="width:100%;height:36px;border-radius:10px;margin-top:4px;" onclick="addPresetDrink()">+ Getränk</button>
+    </div>
+    <button class="btn btn-primary" style="width:100%;height:44px;border-radius:12px;margin-bottom:10px;" onclick="loadPreset(${p.id})">↧ &nbsp;In die App laden</button>
+    <button class="btn btn-danger" style="width:100%;height:38px;border-radius:10px;" onclick="deletePreset()">🗑 &nbsp;Ort löschen</button>`;
+}
+function presetName(v) {
+  const p = locationPresets.find(x => x.id === _editPresetId);
+  if (p) { p.name = v; save(); }
+}
+function presetDrink(i, field, v) {
+  const p = locationPresets.find(x => x.id === _editPresetId);
+  if (!p || !p.drinks[i]) return;
+  if (field === 'price') p.drinks[i].price = parseFloat((v || '0').replace(',', '.')) || 0;
+  else p.drinks[i].name = v;
+  save();
+}
+function addPresetDrink() {
+  const p = locationPresets.find(x => x.id === _editPresetId);
+  if (!p) return;
+  p.drinks.push({ name: '', price: 0 });
+  save();
+  renderPresetEditor();
+}
+function removePresetDrink(i) {
+  const p = locationPresets.find(x => x.id === _editPresetId);
+  if (!p) return;
+  p.drinks.splice(i, 1);
+  save();
+  renderPresetEditor();
+}
+function deletePreset() {
+  const p = locationPresets.find(x => x.id === _editPresetId);
+  if (!p) return;
+  if (!confirm(`Ort "${p.name}" wirklich löschen?`)) return;
+  locationPresets = locationPresets.filter(x => x.id !== _editPresetId);
+  save();
+  closePresetEditor();
 }
 
 // ── Export / Import ───────────────────────────────────────────────────────────
@@ -919,7 +1020,7 @@ async function exportData() {
   const json = JSON.stringify({
     tipPct,
     drinkTypes: drinkTypes.map(({ id, name, price, count }) => ({ id, name, price, count })),
-    eventLog, history,
+    eventLog, history, locationPresets,
   }, null, 2);
   const fname = 'drinks-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   const file = new File([json], fname, { type: 'application/json' });
@@ -946,7 +1047,9 @@ function importData(input) {
       drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
       eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
       history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), events: (h.events || []).map(e => ({ ...e, time: new Date(e.time) })) }));
-      save(); updatePill(); renderDrinkTypes(); renderSummary(); renderEventLog(); renderPresets(); renderHistory();
+      if (d.locationPresets == null) { locationPresets = []; migratePresets(); }
+      else locationPresets = d.locationPresets;
+      save(); updatePill(); renderDrinkTypes(); renderSummary(); renderEventLog(); renderPresetList(); renderHistory();
       alert('Backup importiert ✓');
     } catch (e) { alert('Datei konnte nicht gelesen werden.'); }
     input.value = '';
@@ -968,7 +1071,6 @@ updatePill();
 renderDrinkTypes();
 renderSummary();
 renderEventLog();
-renderPresets();
 </script>
 </body>
 </html>
