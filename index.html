@@ -141,10 +141,10 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   background:var(--surface);border:1px solid var(--border);border-radius:16px;
   display:flex;align-items:center;padding:14px 16px;gap:12px;
   position:relative;overflow:hidden;
-  transition:transform .2s cubic-bezier(.4,0,.2,1);
-  will-change:transform;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  user-select:none;-webkit-user-select:none;
 }
-.drink-card.swiping{transition:none;}
+.drink-card.dragging{transition:none;}
 .drink-card-info{flex:1;min-width:0;}
 .drink-logo-wrap {
   width:42px;height:42px;border-radius:10px;border:1px solid transparent;
@@ -960,49 +960,58 @@ function haptic(type) {
   if (window.navigator && navigator.vibrate) navigator.vibrate(patterns[type] || [10]);
 }
 
-// ── Swipe-to-Remove ───────────────────────────────────────────────────────────
+// ── Swipe-to-Remove (Pointer Events – funktioniert auf iOS Safari) ────────────
 function initSwipe() {
-  document.querySelectorAll('[id^="dc-"]').forEach(card => {
-    if (!card.classList.contains('drink-card')) return;
-    const dtId = parseInt(card.id.replace('dc-', ''));
-    if (isNaN(dtId)) return;
-    let startX = 0, curX = 0, dragging = false;
-    const THRESHOLD = 100;
-    card.style.touchAction = 'pan-y';
-    card.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX; curX = 0; dragging = false;
-      card.classList.add('swiping');
-    }, { passive: true });
-    card.addEventListener('touchmove', e => {
-      const dx = e.touches[0].clientX - startX;
-      const dy = e.touches[0].clientY - (e.touches[0].clientY); // dummy
-      if (!dragging && Math.abs(dx) < 8) return; // Warte auf klare Richtung
-      if (!dragging && Math.abs(dx) > 8) {
-        dragging = true;
-        card.style.touchAction = 'none'; // jetzt horizontal übernehmen
+  document.querySelectorAll('.drink-card').forEach(card => {
+    const m = card.id && card.id.match(/^dc-(\d+)$/);
+    if (!m) return;
+    const dtId = parseInt(m[1]);
+    let startX = 0, startY = 0, curX = 0, active = false, decided = false, isHoriz = false;
+    const THRESHOLD = 80;
+
+    card.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') return; // nur touch/pen
+      startX = e.clientX; startY = e.clientY;
+      curX = 0; active = true; decided = false; isHoriz = false;
+      card.setPointerCapture(e.pointerId);
+    });
+
+    card.addEventListener('pointermove', e => {
+      if (!active) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!decided) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        decided = true;
+        isHoriz = Math.abs(dx) > Math.abs(dy) * 1.2;
+        if (isHoriz) card.classList.add('dragging');
       }
-      if (!dragging) return;
+      if (!isHoriz) return;
       curX = Math.min(0, dx);
       card.style.transform = 'translateX(' + curX + 'px)';
       const hint = document.getElementById('dcs-' + dtId);
       if (hint) hint.style.opacity = Math.min(1, Math.abs(curX) / THRESHOLD);
-    }, { passive: true });
-    card.addEventListener('touchend', () => {
-      card.style.touchAction = 'pan-y'; // zurücksetzen
-      dragging = false;
-      card.classList.remove('swiping');
-      if (Math.abs(curX) >= THRESHOLD) {
+    });
+
+    function endSwipe() {
+      if (!active) return;
+      active = false;
+      card.classList.remove('dragging');
+      if (isHoriz && Math.abs(curX) >= THRESHOLD) {
         haptic('medium');
         card.style.transform = 'translateX(-110%)';
         const hint = document.getElementById('dcs-' + dtId);
         if (hint) hint.style.opacity = '1';
-        setTimeout(() => removeDrinkType(dtId), 250);
+        setTimeout(() => removeDrinkType(dtId), 280);
       } else {
         card.style.transform = '';
         const hint = document.getElementById('dcs-' + dtId);
         if (hint) hint.style.opacity = '0';
       }
-    });
+      curX = 0;
+    }
+    card.addEventListener('pointerup', endSwipe);
+    card.addEventListener('pointercancel', endSwipe);
   });
 }
 
