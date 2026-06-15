@@ -134,19 +134,23 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .drink-card-wrap{position:relative;overflow:hidden;border-radius:16px;}
 .drink-card-hint-add{
   position:absolute;inset:0;background:var(--success);border-radius:16px;
-  display:flex;align-items:center;justify-content:flex-end;padding-right:20px;
-  font-size:.8rem;font-weight:700;color:#fff;opacity:0;pointer-events:none;
-  transition:opacity .15s;}
+  display:flex;align-items:center;justify-content:flex-end;padding-right:24px;
+  font-size:.85rem;font-weight:700;color:#fff;pointer-events:none;
+  transition:opacity .12s;}
 .drink-card-hint-sub{
   position:absolute;inset:0;background:var(--danger);border-radius:16px;
-  display:flex;align-items:center;padding-left:20px;
-  font-size:.8rem;font-weight:700;color:#fff;opacity:0;pointer-events:none;
-  transition:opacity .15s;}
+  display:flex;align-items:center;padding-left:24px;
+  font-size:.85rem;font-weight:700;color:#fff;pointer-events:none;
+  transition:opacity .12s;}
+/* eingerastet = Hint voll sichtbar, leichtes Pulsieren */
+.drink-card-hint-add.snapped,
+.drink-card-hint-sub.snapped{animation:hint-pulse .25s ease;}
+@keyframes hint-pulse{0%{filter:brightness(1)}50%{filter:brightness(1.15)}100%{filter:brightness(1)}}
 .drink-card{
   background:var(--surface);border:1px solid var(--border);border-radius:16px;
   display:flex;align-items:center;padding:14px 16px;gap:12px;
   position:relative;overflow:hidden;
-  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  transition:transform .3s cubic-bezier(.34,1.3,.64,1);
   user-select:none;-webkit-user-select:none;
 }
 .drink-card.dragging{transition:none;}
@@ -690,11 +694,12 @@ function addOne(id) {
   const circ = document.getElementById('dc-circ-' + id);
   if (btn)  { btn.disabled = true; btn.classList.add('cooling'); }
   if (circ) {
-    const r = 26, circ2 = 2 * Math.PI * r; // ≈163
+    const r = 26, circ2 = 2 * Math.PI * r; // ≈163.4
+    // Reset erzwingen damit Animation bei jedem Klick neu startet
     circ.style.transition = 'none';
+    circ.style.opacity = '1';
     circ.style.strokeDasharray = circ2 + ' 999';
-    circ.style.strokeDashoffset = '0';
-    void circ.getBoundingClientRect();
+    void circ.getBoundingClientRect(); // Layout-Flush
     circ.style.transition = `stroke-dasharray ${COOLDOWN}ms linear`;
     circ.style.strokeDasharray = '0 999';
   }
@@ -702,7 +707,7 @@ function addOne(id) {
   dt.timer = setTimeout(() => {
     dt.cooldown = false;
     if (btn)  { btn.disabled = false; btn.classList.remove('cooling'); }
-    if (circ) { circ.style.transition = 'none'; circ.style.strokeDasharray = '0 999'; circ.style.opacity = '0'; }
+    if (circ) { circ.style.transition = 'none'; circ.style.opacity = '0'; circ.style.strokeDasharray = '0 999'; }
   }, COOLDOWN);
 
   renderSummary();
@@ -984,19 +989,21 @@ function haptic(type) {
   if (window.navigator && navigator.vibrate) navigator.vibrate(patterns[type] || [10]);
 }
 
-// ── Swipe +1 / −1 (Pointer Events) ──────────────────────────────────────────
+// ── Swipe +1 / −1 mit Einrast-Mechanik ──────────────────────────────────────
 function initSwipe() {
   document.querySelectorAll('.drink-card').forEach(card => {
     const m = card.id && card.id.match(/^dc-(\d+)$/);
     if (!m) return;
     const dtId = parseInt(m[1]);
-    let startX = 0, startY = 0, curX = 0, active = false, decided = false, isHoriz = false;
-    const THRESHOLD = 60;
+    let startX = 0, startY = 0, curX = 0;
+    let active = false, decided = false, isHoriz = false, snapped = false;
+    const SNAP = 72;   // ab hier einrasten + Haptic
+    const DAMP = 0.3;  // Dämpfung nach dem Snap-Punkt
 
     card.addEventListener('pointerdown', e => {
       if (e.pointerType === 'mouse') return;
       startX = e.clientX; startY = e.clientY;
-      curX = 0; active = true; decided = false; isHoriz = false;
+      curX = 0; active = true; decided = false; isHoriz = false; snapped = false;
       card.setPointerCapture(e.pointerId);
     });
 
@@ -1004,6 +1011,8 @@ function initSwipe() {
       if (!active) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
+
+      // Richtung einmalig bestimmen
       if (!decided) {
         if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
         decided = true;
@@ -1011,14 +1020,17 @@ function initSwipe() {
         if (isHoriz) card.classList.add('dragging');
       }
       if (!isHoriz) return;
-      // leichte Gummiband-Dämpfung ab Threshold
-      const abs = Math.abs(dx);
+
+      // Karte folgt Finger: frei bis SNAP, dann stark gedämpft
       const sign = dx > 0 ? 1 : -1;
-      curX = sign * (abs < THRESHOLD ? abs : THRESHOLD + (abs - THRESHOLD) * 0.25);
+      const abs  = Math.abs(dx);
+      curX = sign * (abs <= SNAP ? abs : SNAP + (abs - SNAP) * DAMP);
       card.style.transform = 'translateX(' + curX + 'px)';
-      const prog = Math.min(1, Math.abs(curX) / THRESHOLD);
+
       const hintAdd = document.getElementById('dca-' + dtId);
       const hintSub = document.getElementById('dcs-' + dtId);
+      const prog = Math.min(1, Math.abs(curX) / SNAP);
+
       if (curX > 0) {
         if (hintAdd) hintAdd.style.opacity = prog;
         if (hintSub) hintSub.style.opacity = 0;
@@ -1026,26 +1038,40 @@ function initSwipe() {
         if (hintSub) hintSub.style.opacity = prog;
         if (hintAdd) hintAdd.style.opacity = 0;
       }
+
+      // Einrasten: einmalig wenn SNAP überschritten
+      if (!snapped && Math.abs(curX) >= SNAP) {
+        snapped = true;
+        haptic('light');  // spürbare Rückmeldung: "jetzt eingerastet"
+        const hint = curX > 0 ? hintAdd : hintSub;
+        if (hint) {
+          hint.classList.add('snapped');
+          setTimeout(() => hint.classList.remove('snapped'), 300);
+        }
+      }
+      // Snap zurücksetzen wenn zurückgezogen
+      if (snapped && Math.abs(curX) < SNAP * 0.7) {
+        snapped = false;
+      }
     });
 
     function endSwipe() {
       if (!active) return;
       active = false;
-      card.classList.remove('dragging');
       const hintAdd = document.getElementById('dca-' + dtId);
       const hintSub = document.getElementById('dcs-' + dtId);
-      if (isHoriz && Math.abs(curX) >= THRESHOLD) {
+
+      if (isHoriz && snapped) {
+        // Über Threshold losgelassen → Aktion ausführen
         if (curX > 0) {
-          // Rechts → +1
-          haptic('light');
+          haptic('medium');
           addOne(dtId);
         } else {
-          // Links → −1
           const dt = drinkTypes.find(d => d.id === dtId);
           if (dt && dt.count > 0) {
             haptic('medium');
             dt.count--;
-            const last = eventLog.map((e,i)=>({e,i})).reverse().find(x=>x.e.typeId===dtId);
+            const last = eventLog.map((e,i) => ({e,i})).reverse().find(x => x.e.typeId === dtId);
             if (last) eventLog.splice(last.i, 1);
             const countEl = document.getElementById('dc-count-' + dtId);
             if (countEl) {
@@ -1061,13 +1087,15 @@ function initSwipe() {
           }
         }
       }
-      // Zurückschnappen mit Transition
+
+      // Immer zurückschnappen (mit Feder-Easing aus CSS)
       card.classList.remove('dragging');
       card.style.transform = '';
-      if (hintAdd) { hintAdd.style.transition = 'opacity .15s'; hintAdd.style.opacity = 0; }
-      if (hintSub) { hintSub.style.transition = 'opacity .15s'; hintSub.style.opacity = 0; }
-      curX = 0;
+      if (hintAdd) hintAdd.style.opacity = 0;
+      if (hintSub) hintSub.style.opacity = 0;
+      curX = 0; snapped = false;
     }
+
     card.addEventListener('pointerup', endSwipe);
     card.addEventListener('pointercancel', endSwipe);
   });
