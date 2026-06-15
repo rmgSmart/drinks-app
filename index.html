@@ -152,6 +152,7 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   position:relative;overflow:hidden;
   transition:transform .3s cubic-bezier(.34,1.3,.64,1);
   user-select:none;-webkit-user-select:none;
+  touch-action:none;
 }
 .drink-card.dragging{transition:none;}
 .drink-card-info{flex:1;min-width:0;}
@@ -996,32 +997,36 @@ function initSwipe() {
     if (!m) return;
     const dtId = parseInt(m[1]);
     let startX = 0, startY = 0, curX = 0;
-    let active = false, decided = false, isHoriz = false, snapped = false;
-    const SNAP = 72;   // ab hier einrasten + Haptic
-    const DAMP = 0.3;  // Dämpfung nach dem Snap-Punkt
+    let decided = false, isHoriz = false, snapped = false;
+    const SNAP = 72;
+    const DAMP = 0.3;
 
-    card.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse') return;
-      startX = e.clientX; startY = e.clientY;
-      curX = 0; active = true; decided = false; isHoriz = false; snapped = false;
-      card.setPointerCapture(e.pointerId);
-    });
+    // ── touchstart ──────────────────────────────────────────────────────────
+    card.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      startX = t.clientX; startY = t.clientY;
+      curX = 0; decided = false; isHoriz = false; snapped = false;
+    }, { passive: true });
 
-    card.addEventListener('pointermove', e => {
-      if (!active) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+    // ── touchmove ───────────────────────────────────────────────────────────
+    card.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
 
-      // Richtung einmalig bestimmen
+      // Richtung einmalig festlegen – erst nach 6px Bewegung
       if (!decided) {
-        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
         decided = true;
-        isHoriz = Math.abs(dx) > Math.abs(dy);
+        isHoriz = Math.abs(dx) > Math.abs(dy) * 1.1;
         if (isHoriz) card.classList.add('dragging');
       }
       if (!isHoriz) return;
 
-      // Karte folgt Finger: frei bis SNAP, dann stark gedämpft
+      // Horizontale Geste: Scrollen verhindern
+      e.preventDefault();
+
+      // Karte folgt Finger: 1:1 bis SNAP, danach gedämpft
       const sign = dx > 0 ? 1 : -1;
       const abs  = Math.abs(dx);
       curX = sign * (abs <= SNAP ? abs : SNAP + (abs - SNAP) * DAMP);
@@ -1030,7 +1035,6 @@ function initSwipe() {
       const hintAdd = document.getElementById('dca-' + dtId);
       const hintSub = document.getElementById('dcs-' + dtId);
       const prog = Math.min(1, Math.abs(curX) / SNAP);
-
       if (curX > 0) {
         if (hintAdd) hintAdd.style.opacity = prog;
         if (hintSub) hintSub.style.opacity = 0;
@@ -1039,10 +1043,10 @@ function initSwipe() {
         if (hintAdd) hintAdd.style.opacity = 0;
       }
 
-      // Einrasten: einmalig wenn SNAP überschritten
+      // Einrasten: einmalig wenn SNAP erreicht
       if (!snapped && Math.abs(curX) >= SNAP) {
         snapped = true;
-        haptic('light');  // spürbare Rückmeldung: "jetzt eingerastet"
+        haptic('light');
         const hint = curX > 0 ? hintAdd : hintSub;
         if (hint) {
           hint.classList.add('snapped');
@@ -1050,19 +1054,17 @@ function initSwipe() {
         }
       }
       // Snap zurücksetzen wenn zurückgezogen
-      if (snapped && Math.abs(curX) < SNAP * 0.7) {
+      if (snapped && Math.abs(curX) < SNAP * 0.65) {
         snapped = false;
       }
-    });
+    }, { passive: false }); // passive:false erlaubt preventDefault()
 
-    function endSwipe() {
-      if (!active) return;
-      active = false;
+    // ── touchend ────────────────────────────────────────────────────────────
+    card.addEventListener('touchend', () => {
       const hintAdd = document.getElementById('dca-' + dtId);
       const hintSub = document.getElementById('dcs-' + dtId);
 
       if (isHoriz && snapped) {
-        // Über Threshold losgelassen → Aktion ausführen
         if (curX > 0) {
           haptic('medium');
           addOne(dtId);
@@ -1088,16 +1090,24 @@ function initSwipe() {
         }
       }
 
-      // Immer zurückschnappen (mit Feder-Easing aus CSS)
+      // Zurückschnappen
       card.classList.remove('dragging');
       card.style.transform = '';
       if (hintAdd) hintAdd.style.opacity = 0;
       if (hintSub) hintSub.style.opacity = 0;
       curX = 0; snapped = false;
-    }
+    });
 
-    card.addEventListener('pointerup', endSwipe);
-    card.addEventListener('pointercancel', endSwipe);
+    // touchcancel = Finger weg ohne Ende (z.B. Anruf) → sauber resetten
+    card.addEventListener('touchcancel', () => {
+      card.classList.remove('dragging');
+      card.style.transform = '';
+      const hintAdd = document.getElementById('dca-' + dtId);
+      const hintSub = document.getElementById('dcs-' + dtId);
+      if (hintAdd) hintAdd.style.opacity = 0;
+      if (hintSub) hintSub.style.opacity = 0;
+      curX = 0; snapped = false; decided = false;
+    });
   });
 }
 
