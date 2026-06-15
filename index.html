@@ -369,12 +369,8 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       <button class="drawer-close" onclick="closeDrawer()">✕</button>
     </div>
     <div class="drawer-body">
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <button class="btn btn-ghost" style="flex:1;height:38px;border-radius:10px;" onclick="exportData()">⬆ &nbsp;Export</button>
-        <button class="btn btn-ghost" style="flex:1;height:38px;border-radius:10px;" onclick="document.getElementById('importFile').click()">⬇ &nbsp;Import</button>
-        <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
-      </div>
-      <div style="margin-bottom:16px;">
+      <div class="card-label" style="margin-bottom:10px;">⚙️ Einstellungen</div>
+      <div style="margin-bottom:6px;">
         <div class="toggle-row">
           <div>
             <div class="toggle-label">📡 GPS-Ortserkennung</div>
@@ -395,7 +391,19 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div class="toggle-row" style="border-bottom:none;">
+          <div>
+            <div class="toggle-label">💾 Datensicherung</div>
+            <div class="toggle-sub">History und Orte exportieren oder importieren</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost" style="height:32px;padding:0 10px;border-radius:8px;font-size:.6rem;" onclick="exportData()">⬆ Export</button>
+            <button class="btn btn-ghost" style="height:32px;padding:0 10px;border-radius:8px;font-size:.6rem;" onclick="document.getElementById('importFile').click()">⬇ Import</button>
+            <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
+          </div>
+        </div>
       </div>
+      <div style="height:1px;background:var(--border);margin:16px 0;"></div>
       <div id="preset-list-view">
         <div class="card-label" style="margin-bottom:10px;">📍 Meine Orte</div>
         <div id="presetList"></div>
@@ -462,9 +470,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
   <button class="btn btn-primary" style="width:100%;height:56px;border-radius:14px;font-size:.8rem;letter-spacing:.15em;margin-bottom:10px;" onclick="openCloseEveningWithGps()">
     🌙 &nbsp;Abend abschließen
   </button>
-  <button class="btn btn-danger" style="width:100%;height:42px;border-radius:12px;" onclick="resetSession()">
-    ↺ &nbsp;Session zurücksetzen
-  </button>
+
 </div>
 
 <!-- (history now in drawer) -->
@@ -787,7 +793,6 @@ function startRing(circ, duration, onDone) {
 function renderDrinkTypes() {
   const wrap = document.getElementById('drinkTypes');
   if (drinkTypes.length === 0) {
-    wrap.innerHTML = '<div style="font-size:.7rem;color:var(--muted);text-align:center;padding:10px 0 4px;">Füge unten ein Getränk hinzu ↓</div>';
     return;
   }
   wrap.innerHTML = drinkTypes.map(dt => `
