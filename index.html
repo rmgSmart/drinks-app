@@ -270,6 +270,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;
   font-size:.7rem;color:var(--text);cursor:pointer;font-family:inherit;transition:all .15s;}
 .chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
 #paceLine{display:none;margin-top:12px;font-size:.68rem;color:var(--muted);text-align:center;}
 
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
@@ -474,8 +475,15 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
   <div class="modal">
     <div class="modal-title">Einstellungen</div>
     <div class="field-label">Trinkgeld</div>
+    <div class="chips" style="margin-bottom:10px;" id="tipChips">
+      <button class="chip" onclick="setTipChip(0)">0 %</button>
+      <button class="chip" onclick="setTipChip(5)">5 %</button>
+      <button class="chip" onclick="setTipChip(10)">10 %</button>
+      <button class="chip" onclick="setTipChip(15)">15 %</button>
+      <button class="chip" onclick="setTipChip(20)">20 %</button>
+    </div>
     <div class="input-row">
-      <input type="text" inputmode="decimal" id="m-tip" placeholder="0">
+      <input type="text" inputmode="decimal" id="m-tip" placeholder="0" oninput="syncTipChips()">
       <span class="input-suffix">%</span>
     </div>
     <div class="modal-actions">
@@ -541,6 +549,18 @@ function uid() { return ++nextId; }
 function totalCount()    { return drinkTypes.reduce((s,d) => s + d.count, 0); }
 function totalSubtotal() { return drinkTypes.reduce((s,d) => s + d.count * d.price, 0); }
 function totalTip()      { return totalSubtotal() * tipPct / 100; }
+
+function setTipChip(val) {
+  document.getElementById('m-tip').value = val;
+  syncTipChips();
+}
+function syncTipChips() {
+  const val = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
+  document.querySelectorAll('#tipChips .chip').forEach(c => {
+    const cv = parseFloat(c.textContent);
+    c.classList.toggle('active', cv === val);
+  });
+}
 function totalGrand()    { return totalSubtotal() + totalTip(); }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
@@ -559,7 +579,10 @@ function showScreen() {} // no-op, single screen now
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function openModal(id) {
-  if (id === 'modal-settings') document.getElementById('m-tip').value = tipPct;
+  if (id === 'modal-settings') {
+    document.getElementById('m-tip').value = tipPct;
+    syncTipChips();
+  }
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
