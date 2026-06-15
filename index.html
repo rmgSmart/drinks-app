@@ -230,6 +230,24 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   font-size:.7rem;color:var(--text);cursor:pointer;font-family:inherit;transition:all .15s;}
 .chip:hover{border-color:var(--accent);color:var(--accent);}
 #paceLine{display:none;margin-top:12px;font-size:.68rem;color:var(--muted);text-align:center;}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:.8rem;color:var(--text);}
+.toggle-sub{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.toggle{position:relative;width:44px;height:26px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:13px;cursor:pointer;transition:.2s;}
+.toggle-slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked + .toggle-slider{background:var(--accent);}
+.toggle input:checked + .toggle-slider:before{transform:translateX(18px);}
+#venueModal{display:none;position:fixed;inset:0;z-index:300;background:rgba(70,52,30,.45);align-items:flex-end;}
+#venueModal.open{display:flex;}
+#venueSheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px 20px 36px;max-height:70vh;overflow-y:auto;}
+.venue-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.venue-item:last-child{border-bottom:none;}
+.venue-item:active{opacity:.7;}
+.venue-dist{font-size:.65rem;color:var(--muted);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -249,6 +267,17 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 </div>
 <div style="height:28px"></div>
 
+<!-- VENUE PICKER -->
+<div id="venueModal">
+  <div id="venueSheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:.85rem;font-weight:700;color:var(--text);">📍 Lokale in der Nähe</div>
+      <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;" onclick="closeVenuePicker()">✕</button>
+    </div>
+    <div id="venueList"></div>
+  </div>
+</div>
+
 <!-- DRAWER -->
 <div class="drawer-bg" id="drawerBg" onclick="closeDrawer(event)">
   <div class="drawer" id="drawer">
@@ -261,6 +290,18 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
         <button class="btn btn-ghost" style="flex:1;height:38px;border-radius:10px;" onclick="exportData()">⬆ &nbsp;Export</button>
         <button class="btn btn-ghost" style="flex:1;height:38px;border-radius:10px;" onclick="document.getElementById('importFile').click()">⬇ &nbsp;Import</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
+      </div>
+      <div style="margin-bottom:16px;">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">📡 GPS-Ortserkennung</div>
+            <div class="toggle-sub">Lokale in der Nähe beim Abend starten vorschlagen</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="gpsToggle" onchange="saveGpsSetting(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
       <div id="preset-list-view">
         <div class="card-label" style="margin-bottom:10px;">📍 Meine Orte</div>
@@ -330,7 +371,7 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 
   <!-- actions -->
-  <button class="btn btn-primary" style="width:100%;height:56px;border-radius:14px;font-size:.8rem;letter-spacing:.15em;margin-bottom:10px;" onclick="openCloseEvening()">
+  <button class="btn btn-primary" style="width:100%;height:56px;border-radius:14px;font-size:.8rem;letter-spacing:.15em;margin-bottom:10px;" onclick="openCloseEveningWithGps()">
     🌙 &nbsp;Abend abschließen
   </button>
   <button class="btn btn-danger" style="width:100%;height:42px;border-radius:12px;" onclick="resetSession()">
@@ -863,6 +904,86 @@ function checkLogo(img, fallbackId) {
   }
 }
 
+// ── GPS Ortserkennung ────────────────────────────────────────────────────────
+let gpsEnabled = false;
+
+function saveGpsSetting(val) {
+  gpsEnabled = val;
+  localStorage.setItem('drinks_gps', val ? '1' : '0');
+  if (val && !('geolocation' in navigator)) {
+    alert('GPS ist auf diesem Gerät nicht verfügbar.');
+    document.getElementById('gpsToggle').checked = false;
+    gpsEnabled = false;
+    localStorage.setItem('drinks_gps', '0');
+  }
+}
+function loadGpsSetting() {
+  gpsEnabled = localStorage.getItem('drinks_gps') === '1';
+  const el = document.getElementById('gpsToggle');
+  if (el) el.checked = gpsEnabled;
+}
+function openCloseEveningWithGps() {
+  if (!gpsEnabled) { openCloseEvening(); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => fetchNearbyVenues(pos.coords.latitude, pos.coords.longitude),
+    ()  => openCloseEvening(),
+    { timeout: 6000, maximumAge: 60000 }
+  );
+}
+async function fetchNearbyVenues(lat, lon) {
+  const query = `[out:json][timeout:10];
+node(around:150,${lat},${lon})[amenity~"^(bar|pub|restaurant|cafe|biergarten|nightclub)$"];
+out body 15;`;
+  try {
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST', body: 'data=' + encodeURIComponent(query)
+    });
+    const d = await r.json();
+    const venues = (d.elements || [])
+      .filter(e => e.tags && e.tags.name)
+      .map(e => ({
+        name: e.tags.name,
+        type: e.tags.amenity,
+        dist: Math.round(haversine(lat, lon, e.lat, e.lon)),
+      }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 8);
+    if (venues.length === 0) { openCloseEvening(); return; }
+    showVenuePicker(venues);
+  } catch(e) { openCloseEvening(); }
+}
+function haversine(la1, lo1, la2, lo2) {
+  const R = 6371000, r = Math.PI / 180;
+  const dLat = (la2 - la1) * r, dLon = (lo2 - lo1) * r;
+  const a = Math.sin(dLat/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+const VENUE_ICONS = { bar:'🍸', pub:'🍺', restaurant:'🍽', cafe:'☕', biergarten:'🌿', nightclub:'🎵' };
+function showVenuePicker(venues) {
+  document.getElementById('venueList').innerHTML =
+    venues.map(v => `
+      <div class="venue-item" onclick="pickVenue('${esc(v.name).replace(/'/g,"\'")}')">
+        <span style="font-size:1.4rem">${VENUE_ICONS[v.type] || '📍'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(v.name)}</div>
+          <div class="venue-dist">${v.dist} m entfernt · ${v.type}</div>
+        </div>
+      </div>`).join('') +
+    `<div class="venue-item" onclick="pickVenue('')" style="opacity:.6;">
+      <span style="font-size:1.4rem">✏️</span>
+      <div style="font-size:.85rem;color:var(--muted);">Manuell eingeben</div>
+    </div>`;
+  document.getElementById('venueModal').classList.add('open');
+}
+function pickVenue(name) {
+  closeVenuePicker();
+  openCloseEvening();
+  if (name) setTimeout(() => document.getElementById('m-location').value = name, 50);
+}
+function closeVenuePicker() {
+  document.getElementById('venueModal').classList.remove('open');
+}
+
 // ── Tempo-Anzeige ─────────────────────────────────────────────────────────────
 function renderPace() {
   const el = document.getElementById('paceLine');
@@ -1067,6 +1188,7 @@ if (navigator.storage && navigator.storage.persist) {
 }
 
 load();
+loadGpsSetting();
 updatePill();
 renderDrinkTypes();
 renderSummary();
