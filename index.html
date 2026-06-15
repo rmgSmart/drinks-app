@@ -373,7 +373,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         <div class="card-label" style="margin-bottom:0;">Einstellungen</div>
         <span id="settingsChevron" style="color:var(--muted);font-size:.8rem;transition:transform .2s;">▼</span>
       </button>
-      <div id="settingsBody" style="display:none;margin-bottom:6px;overflow:hidden;">
+      <div id="settingsBody" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">
         <div class="toggle-row">
           <div>
             <div class="toggle-label">GPS-Ortserkennung</div>
@@ -394,19 +394,19 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
             <span class="toggle-slider"></span>
           </label>
         </div>
-        <div class="toggle-row" style="border-bottom:none;">
-          <div>
+        <div class="toggle-row" style="border-bottom:none;margin-bottom:8px;">
+          <div style="flex:1;min-width:0;">
             <div class="toggle-label">Datensicherung</div>
-            <div class="toggle-sub">History und Orte exportieren oder importieren</div>
+            <div class="toggle-sub">History und Orte sichern</div>
           </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost" style="height:32px;padding:0 10px;border-radius:8px;font-size:.6rem;" onclick="exportData()">⬆ Export</button>
-            <button class="btn btn-ghost" style="height:32px;padding:0 10px;border-radius:8px;font-size:.6rem;" onclick="document.getElementById('importFile').click()">⬇ Import</button>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;font-size:.65rem;" onclick="exportData()">Export</button>
+            <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;font-size:.65rem;" onclick="document.getElementById('importFile').click()">Import</button>
             <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
           </div>
         </div>
-      </div></div>
-      <div style="height:1px;background:var(--border);margin:8px 0 16px;"></div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
       <div id="preset-list-view">
         <div class="card-label" style="margin-bottom:12px;font-size:.78rem;">Meine Orte</div>
         <div id="presetList"></div>
