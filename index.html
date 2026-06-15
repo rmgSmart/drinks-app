@@ -1031,9 +1031,14 @@ function checkLogo(img, fallbackId) {
 function toggleSettings() {
   const body = document.getElementById('settingsBody');
   const chev = document.getElementById('settingsChevron');
-  const open = body.style.display === 'none';
-  body.style.display = open ? 'block' : 'none';
-  chev.style.transform = open ? 'rotate(180deg)' : '';
+  const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+  if (isOpen) {
+    body.style.maxHeight = '0px';
+    chev.style.transform = '';
+  } else {
+    body.style.maxHeight = (body.scrollHeight + 300) + 'px';
+    chev.style.transform = 'rotate(180deg)';
+  }
 }
 
 // ── Dark Mode ────────────────────────────────────────────────────────────────
