@@ -132,7 +132,12 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 /* drink type cards */
 .drink-types{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:14px;}
 .drink-card-wrap{position:relative;overflow:hidden;border-radius:16px;}
-.drink-card-swipe-hint{
+.drink-card-hint-add{
+  position:absolute;inset:0;background:var(--success);border-radius:16px;
+  display:flex;align-items:center;justify-content:flex-end;padding-right:20px;
+  font-size:.8rem;font-weight:700;color:#fff;opacity:0;pointer-events:none;
+  transition:opacity .15s;}
+.drink-card-hint-sub{
   position:absolute;inset:0;background:var(--danger);border-radius:16px;
   display:flex;align-items:center;padding-left:20px;
   font-size:.8rem;font-weight:700;color:#fff;opacity:0;pointer-events:none;
@@ -713,7 +718,8 @@ function renderDrinkTypes() {
   }
   wrap.innerHTML = drinkTypes.map(dt => `
     <div class="drink-card-wrap" id="dcw-${dt.id}">
-      <div class="drink-card-swipe-hint" id="dcs-${dt.id}">🗑 Entfernen</div>
+      <div class="drink-card-hint-add" id="dca-${dt.id}">+1 &nbsp;✓</div>
+      <div class="drink-card-hint-sub" id="dcs-${dt.id}">−1 &nbsp;↩</div>
       <div class="drink-card" id="dc-${dt.id}">
         ${logoHtml(dt.name)}
         <div class="drink-card-info">
@@ -725,6 +731,7 @@ function renderDrinkTypes() {
           <div class="drink-cooldown-bar" id="dc-bar-${dt.id}" style="width:${dt.cooldown?'100%':'0%'}"></div>
           <span style="position:relative;z-index:1">+</span>
         </button>
+        <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 0 0 6px;line-height:1;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
       </div>
     </div>`).join('');
   initSwipe();
@@ -960,17 +967,17 @@ function haptic(type) {
   if (window.navigator && navigator.vibrate) navigator.vibrate(patterns[type] || [10]);
 }
 
-// ── Swipe-to-Remove (Pointer Events – funktioniert auf iOS Safari) ────────────
+// ── Swipe +1 / −1 (Pointer Events) ──────────────────────────────────────────
 function initSwipe() {
   document.querySelectorAll('.drink-card').forEach(card => {
     const m = card.id && card.id.match(/^dc-(\d+)$/);
     if (!m) return;
     const dtId = parseInt(m[1]);
     let startX = 0, startY = 0, curX = 0, active = false, decided = false, isHoriz = false;
-    const THRESHOLD = 80;
+    const THRESHOLD = 72;
 
     card.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse') return; // nur touch/pen
+      if (e.pointerType === 'mouse') return;
       startX = e.clientX; startY = e.clientY;
       curX = 0; active = true; decided = false; isHoriz = false;
       card.setPointerCapture(e.pointerId);
@@ -987,27 +994,58 @@ function initSwipe() {
         if (isHoriz) card.classList.add('dragging');
       }
       if (!isHoriz) return;
-      curX = Math.min(0, dx);
+      // Bewegung dämpfen damit es sich natürlich anfühlt
+      curX = dx * 0.4;
       card.style.transform = 'translateX(' + curX + 'px)';
-      const hint = document.getElementById('dcs-' + dtId);
-      if (hint) hint.style.opacity = Math.min(1, Math.abs(curX) / THRESHOLD);
+      const prog = Math.min(1, Math.abs(curX) / THRESHOLD);
+      const hintAdd = document.getElementById('dca-' + dtId);
+      const hintSub = document.getElementById('dcs-' + dtId);
+      if (curX > 0) {
+        if (hintAdd) hintAdd.style.opacity = prog;
+        if (hintSub) hintSub.style.opacity = 0;
+      } else {
+        if (hintSub) hintSub.style.opacity = prog;
+        if (hintAdd) hintAdd.style.opacity = 0;
+      }
     });
 
     function endSwipe() {
       if (!active) return;
       active = false;
       card.classList.remove('dragging');
+      const hintAdd = document.getElementById('dca-' + dtId);
+      const hintSub = document.getElementById('dcs-' + dtId);
       if (isHoriz && Math.abs(curX) >= THRESHOLD) {
-        haptic('medium');
-        card.style.transform = 'translateX(-110%)';
-        const hint = document.getElementById('dcs-' + dtId);
-        if (hint) hint.style.opacity = '1';
-        setTimeout(() => removeDrinkType(dtId), 280);
-      } else {
-        card.style.transform = '';
-        const hint = document.getElementById('dcs-' + dtId);
-        if (hint) hint.style.opacity = '0';
+        if (curX > 0) {
+          // Rechts → +1
+          haptic('light');
+          addOne(dtId);
+        } else {
+          // Links → −1
+          const dt = drinkTypes.find(d => d.id === dtId);
+          if (dt && dt.count > 0) {
+            haptic('medium');
+            dt.count--;
+            const last = eventLog.map((e,i)=>({e,i})).reverse().find(x=>x.e.typeId===dtId);
+            if (last) eventLog.splice(last.i, 1);
+            const countEl = document.getElementById('dc-count-' + dtId);
+            if (countEl) {
+              countEl.textContent = dt.count;
+              countEl.classList.remove('bump');
+              void countEl.offsetWidth;
+              countEl.classList.add('bump');
+              setTimeout(() => countEl.classList.remove('bump'), 200);
+            }
+            renderSummary();
+            renderEventLog();
+            save();
+          }
+        }
       }
+      // Zurückschnappen
+      card.style.transform = '';
+      if (hintAdd) hintAdd.style.opacity = 0;
+      if (hintSub) hintSub.style.opacity = 0;
       curX = 0;
     }
     card.addEventListener('pointerup', endSwipe);
