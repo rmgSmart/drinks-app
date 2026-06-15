@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Drinks">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -30,9 +30,10 @@ html[data-theme="dark"] .toggle-slider:before{background:#ccc;}
 html {
   height: 100%;
   overflow: hidden;
+  font-size: 17px;
 }
 body{
-  background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;
   min-height:100%;height:100%;overflow-y:auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: none;
@@ -42,7 +43,7 @@ body{
                    radial-gradient(ellipse at 85% 95%,#e6f3ec 0%,transparent 55%);
 }
 h1{
-  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+  font-family:'Nunito',sans-serif;font-weight:800;
   font-size:clamp(2.2rem,6vw,3.5rem);letter-spacing:-0.02em;
   color:var(--accent);text-align:center;margin-bottom:4px;line-height:1;
 }
@@ -80,7 +81,7 @@ h1{
   padding:max(20px, calc(env(safe-area-inset-top) + 12px)) 20px 16px;
   border-bottom:1px solid var(--border);
 }
-.drawer-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent);}
+.drawer-title{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent);}
 .drawer-close{
   width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);
   border-radius:10px;font-size:1rem;color:var(--muted);cursor:pointer;
@@ -96,7 +97,7 @@ h1{
 /* card */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;
   padding:24px;width:100%;margin-bottom:14px;}
-.card-label{font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.card-label{font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;font-weight:700;}
 
 /* inputs */
 .field-label{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
@@ -104,12 +105,12 @@ h1{
   border-radius:12px;padding:4px 4px 4px 14px;transition:border-color .2s;margin-bottom:13px;}
 .input-row:focus-within{border-color:var(--accent);}
 .input-row input{background:none;border:none;outline:none;color:var(--text);
-  font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;width:100%;padding:9px 0;}
+  font-family:'Nunito',sans-serif;font-size:.95rem;width:100%;padding:9px 0;}
 input::-webkit-inner-spin-button{-webkit-appearance:none}
 .input-suffix{color:var(--accent);font-size:.83rem;padding-right:13px;font-weight:500;flex-shrink:0;}
 
 /* buttons */
-.btn{font-family:'Plus Jakarta Sans',sans-serif;border:none;cursor:pointer;border-radius:12px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.btn{font-family:'Nunito',sans-serif;border:none;cursor:pointer;border-radius:12px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
 .btn-primary{background:var(--accent);color:#fff;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:500;}
 .btn-primary:hover{filter:brightness(.9);}
 .btn-primary:active{transform:scale(.97);}
@@ -167,11 +168,11 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .drink-logo-emoji-fb {
   font-size:1.4rem;display:flex;align-items:center;justify-content:center;
 }
-.drink-card-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text);
+.drink-card-name{font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);
   margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .drink-card-price{font-size:.65rem;color:var(--muted);}
 .drink-count{
-  font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);
+  font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);
   min-width:42px;text-align:center;transition:transform .12s cubic-bezier(.34,1.56,.64,1);
 }
 .drink-count.bump{transform:scale(1.25);}
@@ -210,11 +211,11 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
 .stat-box{background:var(--surface2);border-radius:12px;padding:12px 14px;border:1px solid var(--border);}
 .stat-label{font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
-.stat-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:600;color:var(--text);}
+.stat-value{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);}
 .stat-value.hi{color:var(--accent);font-size:1.7rem;}
 .total-line{border-top:1px solid var(--border);padding-top:15px;display:flex;justify-content:space-between;align-items:center;}
 .total-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
-.total-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--success);}
+.total-value{font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800;color:var(--success);}
 
 /* timeline list */
 .evt-list{display:flex;flex-direction:column;}
@@ -222,7 +223,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .evt-item:last-child{border-bottom:none;}
 @keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 .evt-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent);flex-shrink:0;}
-.evt-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:600;color:var(--accent);width:24px;flex-shrink:0;}
+.evt-num{font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:600;color:var(--accent);width:24px;flex-shrink:0;}
 .evt-name{font-size:.72rem;color:var(--text);flex:1;}
 .evt-time{font-size:.6rem;color:var(--muted);flex-shrink:0;}
 .evt-empty{font-size:.68rem;color:var(--muted);text-align:center;padding:14px 0;letter-spacing:.1em;}
@@ -232,9 +233,9 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
   padding:18px;width:100%;margin-bottom:12px;cursor:pointer;transition:border-color .2s;}
 .history-item:hover{border-color:var(--accent);}
 .history-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.history-date{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:600;color:var(--text);}
+.history-date{font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);}
 .history-location{font-size:.65rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;}
-.history-total{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:var(--success);}
+.history-total{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:800;color:var(--success);}
 .history-tags{display:flex;flex-wrap:wrap;gap:6px;}
 .history-tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
   padding:3px 10px;font-size:.6rem;color:var(--muted);}
@@ -243,7 +244,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 
 /* history detail */
 .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);
-  font-family:'Plus Jakarta Sans',sans-serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  font-family:'Nunito',sans-serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
   cursor:pointer;padding:0;margin-bottom:20px;transition:color .2s;}
 .back-btn:hover{color:var(--text);}
 
@@ -253,7 +254,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .modal-bg.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;
   padding:28px 24px 40px;width:100%;max-width:500px;}
-.modal-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.25rem;font-weight:600;margin-bottom:20px;}
+.modal-title{font-family:'Nunito',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:20px;}
 .modal-actions{display:flex;gap:10px;margin-top:6px;}
 .btn-modal-save{flex:1;height:48px;border-radius:12px;}
 .btn-modal-cancel{height:48px;padding:0 18px;border-radius:12px;}
@@ -320,7 +321,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-.venue-popup{font-family:'Plus Jakarta Sans',sans-serif;min-width:140px;}
+.venue-popup{font-family:'Nunito',sans-serif;min-width:140px;}
 .venue-popup b{display:block;font-size:.85rem;font-weight:700;margin-bottom:2px;}
 .venue-popup small{font-size:.7rem;color:#8a8274;display:block;margin-bottom:8px;}
 .venue-popup-btn{
@@ -425,10 +426,10 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
     <div class="card-label">Neues Getränk hinzufügen</div>
     <div class="add-drink-row">
       <div class="input-row" style="margin-bottom:0;flex:1">
-        <input type="text" id="new-name" placeholder="Name (z.B. Bier)" style="background:none;border:none;outline:none;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
+        <input type="text" id="new-name" placeholder="Name (z.B. Bier)" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
       </div>
       <div class="input-row price-field" style="margin-bottom:0;">
-        <input type="text" inputmode="decimal" id="new-price" placeholder="0,00" style="background:none;border:none;outline:none;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
+        <input type="text" inputmode="decimal" id="new-price" placeholder="0,00" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
         <span class="input-suffix">€</span>
       </div>
       <button class="btn btn-primary" style="height:44px;padding:0 14px;white-space:nowrap;border-radius:12px;" onclick="addDrinkType()">+</button>
@@ -500,7 +501,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
     <div class="close-summary" id="closeSummary"></div>
     <div class="field-label">Ort / Bar</div>
     <div class="input-row">
-      <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" style="background:none;border:none;outline:none;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
+      <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
     </div>
     <div class="chips" id="locChips" style="margin:-4px 0 14px;"></div>
     <div class="modal-actions">
@@ -954,7 +955,7 @@ function showHistoryDetail(id) {
     <button class="back-btn" onclick="renderHistory()">← Zurück</button>
     <div class="card" style="margin-top:0">
       <div style="margin-bottom:14px">
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:4px">${dateStr(new Date(h.date))}</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:4px">${dateStr(new Date(h.date))}</div>
         <div style="font-size:.72rem;color:var(--muted)">📍 ${esc(h.location)}</div>
       </div>
       ${h.drinks.map(d => `
@@ -970,7 +971,7 @@ function showHistoryDetail(id) {
       </div>
       <div style="display:flex;justify-content:space-between;padding:14px 0 0;align-items:center;">
         <span style="font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Gesamt</span>
-        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.9rem;font-weight:800;color:var(--success)">${fmt(h.total)}</span>
+        <span style="font-family:'Nunito',sans-serif;font-size:1.9rem;font-weight:800;color:var(--success)">${fmt(h.total)}</span>
       </div>
     </div>
     ${eventsHtml}
@@ -1375,7 +1376,7 @@ setInterval(renderPace, 30000);
 let _recentLocs = [];
 let locationPresets = [];
 let _editPresetId = null;
-const INP = "background:none;border:none;outline:none;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;width:100%;padding:8px 0;";
+const INP = "background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.85rem;width:100%;padding:8px 0;";
 
 function recentLocations() {
   const seen = locationPresets.map(p => p.name);
