@@ -18,6 +18,15 @@
   --accent:#e0701f;--text:#33291f;--muted:#8a8274;
   --danger:#d94f4f;--success:#1f9d63;
 }
+html[data-theme="dark"]{
+  --bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;
+  --accent:#e8a050;--text:#f0eee8;--muted:#6e6e80;
+  --danger:#ff6b6b;--success:#6bcb8b;}
+html[data-theme="dark"] body{
+  background-image:radial-gradient(ellipse at 20% 10%,#1a1a2e 0%,transparent 60%),
+                   radial-gradient(ellipse at 80% 80%,#1c1410 0%,transparent 60%);}
+html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--muted);}
+html[data-theme="dark"] .toggle-slider:before{background:#ccc;}
 html {
   height: 100%;
   overflow: hidden;
@@ -122,11 +131,20 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 
 /* drink type cards */
 .drink-types{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:14px;}
+.drink-card-wrap{position:relative;overflow:hidden;border-radius:16px;}
+.drink-card-swipe-hint{
+  position:absolute;inset:0;background:var(--danger);border-radius:16px;
+  display:flex;align-items:center;padding-left:20px;
+  font-size:.8rem;font-weight:700;color:#fff;opacity:0;pointer-events:none;
+  transition:opacity .15s;}
 .drink-card{
   background:var(--surface);border:1px solid var(--border);border-radius:16px;
   display:flex;align-items:center;padding:14px 16px;gap:12px;
   position:relative;overflow:hidden;
+  transition:transform .2s cubic-bezier(.4,0,.2,1);
+  will-change:transform;touch-action:pan-y;
 }
+.drink-card.swiping{transition:none;}
 .drink-card-info{flex:1;min-width:0;}
 .drink-logo-wrap {
   width:42px;height:42px;border-radius:10px;border:1px solid transparent;
@@ -299,6 +317,16 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
           </div>
           <label class="toggle">
             <input type="checkbox" id="gpsToggle" onchange="saveGpsSetting(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">🌙 Dark Mode</div>
+            <div class="toggle-sub">Dunkles Design für abends</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="darkToggle" onchange="saveDarkMode(this.checked)">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -627,6 +655,7 @@ function addOne(id) {
 
   dt.count++;
   eventLog.push({ typeId: id, typeName: dt.name, price: dt.price, time: new Date() });
+  haptic('light');
 
   // update + bump animation
   const countEl = document.getElementById('dc-count-' + id);
@@ -663,6 +692,7 @@ function addOne(id) {
 
 function undoLast() {
   if (eventLog.length === 0) return;
+  haptic('medium');
   const last = eventLog.pop();
   const dt = drinkTypes.find(d => d.id === last.typeId);
   if (dt && dt.count > 0) {
@@ -682,19 +712,22 @@ function renderDrinkTypes() {
     return;
   }
   wrap.innerHTML = drinkTypes.map(dt => `
-    <div class="drink-card">
-      ${logoHtml(dt.name)}
-      <div class="drink-card-info">
-        <div class="drink-card-name">${esc(dt.name)}</div>
-        <div class="drink-card-price">${fmt(dt.price)} / Stück</div>
+    <div class="drink-card-wrap" id="dcw-${dt.id}">
+      <div class="drink-card-swipe-hint" id="dcs-${dt.id}">🗑 Entfernen</div>
+      <div class="drink-card" id="dc-${dt.id}">
+        ${logoHtml(dt.name)}
+        <div class="drink-card-info">
+          <div class="drink-card-name">${esc(dt.name)}</div>
+          <div class="drink-card-price">${fmt(dt.price)} / Stück</div>
+        </div>
+        <div class="drink-count" id="dc-count-${dt.id}">${dt.count}</div>
+        <button class="drink-add-btn" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
+          <div class="drink-cooldown-bar" id="dc-bar-${dt.id}" style="width:${dt.cooldown?'100%':'0%'}"></div>
+          <span style="position:relative;z-index:1">+</span>
+        </button>
       </div>
-      <div class="drink-count" id="dc-count-${dt.id}">${dt.count}</div>
-      <button class="drink-add-btn" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
-        <div class="drink-cooldown-bar" id="dc-bar-${dt.id}" style="width:${dt.cooldown?'100%':'0%'}"></div>
-        <span style="position:relative;z-index:1">+</span>
-      </button>
-      <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 0 0 8px;line-height:1;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
     </div>`).join('');
+  initSwipe();
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
@@ -902,6 +935,66 @@ function checkLogo(img, fallbackId) {
   } catch(e) {
     img.style.opacity = '1'; // CORS issue — just show it
   }
+}
+
+// ── Dark Mode ────────────────────────────────────────────────────────────────
+function saveDarkMode(on) {
+  localStorage.setItem('drinks_dark', on ? '1' : '0');
+  applyDarkMode(on);
+}
+function applyDarkMode(on) {
+  document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
+  document.querySelector('meta[name="theme-color"]').content = on ? '#0e0e10' : '#faf6f0';
+  const el = document.getElementById('darkToggle');
+  if (el) el.checked = on;
+}
+function loadDarkMode() {
+  const stored = localStorage.getItem('drinks_dark');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyDarkMode(stored !== null ? stored === '1' : prefersDark);
+}
+
+// ── Haptic Feedback ───────────────────────────────────────────────────────────
+function haptic(type) {
+  const patterns = { light:[10], medium:[20], success:[10,40,10], error:[30,20,30] };
+  if (window.navigator && navigator.vibrate) navigator.vibrate(patterns[type] || [10]);
+}
+
+// ── Swipe-to-Remove ───────────────────────────────────────────────────────────
+function initSwipe() {
+  document.querySelectorAll('[id^="dc-"]').forEach(card => {
+    if (!card.classList.contains('drink-card')) return;
+    const dtId = parseInt(card.id.replace('dc-', ''));
+    if (isNaN(dtId)) return;
+    let startX = 0, curX = 0, dragging = false;
+    const THRESHOLD = 100;
+    card.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX; curX = 0; dragging = true;
+      card.classList.add('swiping');
+    }, { passive: true });
+    card.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      curX = Math.min(0, e.touches[0].clientX - startX);
+      card.style.transform = 'translateX(' + curX + 'px)';
+      const hint = document.getElementById('dcs-' + dtId);
+      if (hint) hint.style.opacity = Math.min(1, Math.abs(curX) / THRESHOLD);
+    }, { passive: true });
+    card.addEventListener('touchend', () => {
+      dragging = false;
+      card.classList.remove('swiping');
+      if (Math.abs(curX) >= THRESHOLD) {
+        haptic('medium');
+        card.style.transform = 'translateX(-110%)';
+        const hint = document.getElementById('dcs-' + dtId);
+        if (hint) hint.style.opacity = '1';
+        setTimeout(() => removeDrinkType(dtId), 250);
+      } else {
+        card.style.transform = '';
+        const hint = document.getElementById('dcs-' + dtId);
+        if (hint) hint.style.opacity = '0';
+      }
+    });
+  });
 }
 
 // ── GPS Ortserkennung ────────────────────────────────────────────────────────
@@ -1188,6 +1281,7 @@ if (navigator.storage && navigator.storage.persist) {
 }
 
 load();
+loadDarkMode();
 loadGpsSetting();
 updatePill();
 renderDrinkTypes();
