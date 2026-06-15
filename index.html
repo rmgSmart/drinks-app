@@ -318,6 +318,16 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .venue-dist{font-size:.65rem;color:var(--muted);margin-top:2px;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+.venue-popup{font-family:'Plus Jakarta Sans',sans-serif;min-width:140px;}
+.venue-popup b{display:block;font-size:.85rem;font-weight:700;margin-bottom:2px;}
+.venue-popup small{font-size:.7rem;color:#8a8274;display:block;margin-bottom:8px;}
+.venue-popup-btn{
+  display:block;width:100%;padding:7px 0;background:#e0701f;color:#fff;
+  border:none;border-radius:8px;font-size:.72rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:inherit;}
+.venue-popup-btn:active{opacity:.8;}
+</style>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
@@ -1288,9 +1298,17 @@ function showVenuePicker(venues, userLat, userLon) {
           </div>`,
           iconSize: [28, 28], iconAnchor: [14, 28]
         });
+        const safeName = v.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
         L.marker([v.lat, v.lon], { icon })
           .addTo(_leafletMap)
-          .bindPopup(`<b>${v.name}</b><br>${v.dist} m`);
+          .bindPopup(`
+            <div class="venue-popup">
+              <b>${esc(v.name)}</b>
+              <small>${v.dist} m entfernt · ${v.type}</small>
+              <button class="venue-popup-btn" onclick="pickVenue('${safeName}')">
+                ✓ &nbsp;Übernehmen
+              </button>
+            </div>`, { maxWidth: 200, closeButton: false });
       });
 
       // Karte auf alle Punkte einzoomen
