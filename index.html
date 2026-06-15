@@ -174,12 +174,24 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   width:52px;height:52px;border-radius:12px;background:var(--accent);
   color:#fff;font-size:1.4rem;border:none;cursor:pointer;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  transition:all .15s;position:relative;overflow:hidden;
+  transition:background .2s, transform .15s;position:relative;overflow:visible;
 }
-.drink-add-btn:disabled{background:#ece5d8;color:var(--muted);cursor:not-allowed;}
-.drink-add-btn:not(:disabled):hover{filter:brightness(.9);}
-.drink-add-btn:not(:disabled):active{transform:scale(.94);}
-.drink-cooldown-bar{position:absolute;left:0;bottom:0;height:3px;width:0%;background:rgba(255,255,255,.45);}
+.drink-add-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
+.drink-add-btn:not(:disabled):active{transform:scale(.9);}
+/* SVG-Ring um den Button */
+.cooldown-ring{
+  position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);
+  pointer-events:none;transform:rotate(-90deg);
+}
+.cooldown-ring circle{
+  fill:none;stroke:var(--accent);stroke-width:3;
+  stroke-linecap:round;
+  stroke-dasharray:0 999;
+  transition:none;
+  opacity:0;
+}
+.drink-add-btn.cooling .cooldown-ring circle{opacity:1;}
+html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--muted);}
 
 /* add drink form */
 .add-drink-form{background:var(--surface);border:1px dashed var(--border);border-radius:16px;
@@ -672,22 +684,25 @@ function addOne(id) {
     setTimeout(() => countEl.classList.remove('bump'), 200);
   }
 
-  // cooldown
+  // cooldown mit SVG-Ring
   dt.cooldown = true;
-  const btn = document.getElementById('dc-btn-' + id);
-  const bar = document.getElementById('dc-bar-' + id);
-  if (btn) btn.disabled = true;
-  if (bar) {
-    bar.style.transition = 'none'; bar.style.width = '0%';
-    void bar.offsetWidth;
-    bar.style.transition = `width ${COOLDOWN}ms linear`;
-    bar.style.width = '100%';
+  const btn  = document.getElementById('dc-btn-' + id);
+  const circ = document.getElementById('dc-circ-' + id);
+  if (btn)  { btn.disabled = true; btn.classList.add('cooling'); }
+  if (circ) {
+    const r = 26, circ2 = 2 * Math.PI * r; // ≈163
+    circ.style.transition = 'none';
+    circ.style.strokeDasharray = circ2 + ' 999';
+    circ.style.strokeDashoffset = '0';
+    void circ.getBoundingClientRect();
+    circ.style.transition = `stroke-dasharray ${COOLDOWN}ms linear`;
+    circ.style.strokeDasharray = '0 999';
   }
   if (dt.timer) clearTimeout(dt.timer);
   dt.timer = setTimeout(() => {
     dt.cooldown = false;
-    if (btn) { btn.disabled = false; }
-    if (bar) { bar.style.transition = 'width .2s ease'; bar.style.width = '0%'; }
+    if (btn)  { btn.disabled = false; btn.classList.remove('cooling'); }
+    if (circ) { circ.style.transition = 'none'; circ.style.strokeDasharray = '0 999'; circ.style.opacity = '0'; }
   }, COOLDOWN);
 
   renderSummary();
@@ -727,8 +742,10 @@ function renderDrinkTypes() {
           <div class="drink-card-price">${fmt(dt.price)} / Stück</div>
         </div>
         <div class="drink-count" id="dc-count-${dt.id}">${dt.count}</div>
-        <button class="drink-add-btn" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
-          <div class="drink-cooldown-bar" id="dc-bar-${dt.id}" style="width:${dt.cooldown?'100%':'0%'}"></div>
+        <button class="drink-add-btn${dt.cooldown?' cooling':''}" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
+          <svg class="cooldown-ring" viewBox="0 0 60 60" id="dc-ring-${dt.id}">
+            <circle cx="30" cy="30" r="26" id="dc-circ-${dt.id}"/>
+          </svg>
           <span style="position:relative;z-index:1">+</span>
         </button>
         <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 0 0 6px;line-height:1;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
@@ -974,7 +991,7 @@ function initSwipe() {
     if (!m) return;
     const dtId = parseInt(m[1]);
     let startX = 0, startY = 0, curX = 0, active = false, decided = false, isHoriz = false;
-    const THRESHOLD = 72;
+    const THRESHOLD = 60;
 
     card.addEventListener('pointerdown', e => {
       if (e.pointerType === 'mouse') return;
@@ -988,14 +1005,16 @@ function initSwipe() {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       if (!decided) {
-        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
         decided = true;
-        isHoriz = Math.abs(dx) > Math.abs(dy) * 1.2;
+        isHoriz = Math.abs(dx) > Math.abs(dy);
         if (isHoriz) card.classList.add('dragging');
       }
       if (!isHoriz) return;
-      // Bewegung dämpfen damit es sich natürlich anfühlt
-      curX = dx * 0.4;
+      // leichte Gummiband-Dämpfung ab Threshold
+      const abs = Math.abs(dx);
+      const sign = dx > 0 ? 1 : -1;
+      curX = sign * (abs < THRESHOLD ? abs : THRESHOLD + (abs - THRESHOLD) * 0.25);
       card.style.transform = 'translateX(' + curX + 'px)';
       const prog = Math.min(1, Math.abs(curX) / THRESHOLD);
       const hintAdd = document.getElementById('dca-' + dtId);
@@ -1042,10 +1061,11 @@ function initSwipe() {
           }
         }
       }
-      // Zurückschnappen
+      // Zurückschnappen mit Transition
+      card.classList.remove('dragging');
       card.style.transform = '';
-      if (hintAdd) hintAdd.style.opacity = 0;
-      if (hintSub) hintSub.style.opacity = 0;
+      if (hintAdd) { hintAdd.style.transition = 'opacity .15s'; hintAdd.style.opacity = 0; }
+      if (hintSub) { hintSub.style.transition = 'opacity .15s'; hintSub.style.opacity = 0; }
       curX = 0;
     }
     card.addEventListener('pointerup', endSwipe);
