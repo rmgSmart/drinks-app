@@ -125,10 +125,10 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   border:1px solid var(--border);border-radius:40px;padding:7px 16px;
   margin-bottom:16px;width:100%;justify-content:center;cursor:pointer;transition:border-color .2s;}
 .settings-pill:hover{border-color:var(--accent);}
-.pill-item{font-size:.68rem;color:var(--muted);display:flex;align-items:center;gap:4px;}
-.pill-val{color:var(--accent);font-weight:500;}
+.pill-item{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.pill-val{color:var(--accent);font-weight:700;font-size:1rem;}
 .pill-sep{width:1px;height:13px;background:var(--border);}
-.pill-edit{font-size:.52rem;letter-spacing:.13em;color:var(--muted);opacity:.6;}
+.pill-edit{display:none;}
 
 /* drink type cards */
 .drink-types{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:14px;}
@@ -370,13 +370,13 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
     </div>
     <div class="drawer-body">
       <button onclick="toggleSettings()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 12px;" id="settingsToggleBtn">
-        <div class="card-label" style="margin-bottom:0;">⚙️ Einstellungen</div>
+        <div class="card-label" style="margin-bottom:0;">Einstellungen</div>
         <span id="settingsChevron" style="color:var(--muted);font-size:.8rem;transition:transform .2s;">▼</span>
       </button>
       <div id="settingsBody" style="display:none;margin-bottom:6px;overflow:hidden;">
         <div class="toggle-row">
           <div>
-            <div class="toggle-label">📡 GPS-Ortserkennung</div>
+            <div class="toggle-label">GPS-Ortserkennung</div>
             <div class="toggle-sub">Lokale in der Nähe beim Abend starten vorschlagen</div>
           </div>
           <label class="toggle">
@@ -386,7 +386,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         </div>
         <div class="toggle-row">
           <div>
-            <div class="toggle-label">🌙 Dark Mode</div>
+            <div class="toggle-label">Dark Mode</div>
             <div class="toggle-sub">Dunkles Design für abends</div>
           </div>
           <label class="toggle">
@@ -396,7 +396,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         </div>
         <div class="toggle-row" style="border-bottom:none;">
           <div>
-            <div class="toggle-label">💾 Datensicherung</div>
+            <div class="toggle-label">Datensicherung</div>
             <div class="toggle-sub">History und Orte exportieren oder importieren</div>
           </div>
           <div style="display:flex;gap:6px;">
@@ -408,7 +408,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       </div></div>
       <div style="height:1px;background:var(--border);margin:8px 0 16px;"></div>
       <div id="preset-list-view">
-        <div class="card-label" style="margin-bottom:12px;font-size:.78rem;">📍 Meine Orte</div>
+        <div class="card-label" style="margin-bottom:12px;font-size:.78rem;">Meine Orte</div>
         <div id="presetList"></div>
         <div class="card-label" style="margin:24px 0 12px;font-size:.78rem;">Verlauf</div>
       </div>
@@ -425,8 +425,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
   <!-- settings pill -->
   <div class="settings-pill" onclick="openModal('modal-settings')">
     <div class="pill-item"><span>🤝</span><span id="pill-tip" class="pill-val">10 %</span><span>Trinkgeld</span></div>
-    <div class="pill-sep"></div>
-    <span class="pill-edit">bearbeiten ✎</span>
+
   </div>
 
   <!-- drink type list -->
