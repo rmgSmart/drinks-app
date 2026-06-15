@@ -88,7 +88,7 @@ h1{
   display:flex;align-items:center;justify-content:center;transition:all .15s;
 }
 .drawer-close:hover{border-color:var(--muted);color:var(--text);}
-.drawer-body{padding:16px;flex:1;}
+.drawer-body{padding:20px 18px;flex:1;}
 
 /* screens */
 .screen{display:none;width:100%;max-width:440px;flex-direction:column;align-items:center;}
@@ -224,8 +224,8 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 @keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 .evt-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent);flex-shrink:0;}
 .evt-num{font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:600;color:var(--accent);width:24px;flex-shrink:0;}
-.evt-name{font-size:.72rem;color:var(--text);flex:1;}
-.evt-time{font-size:.6rem;color:var(--muted);flex-shrink:0;}
+.evt-name{font-size:.85rem;color:var(--text);flex:1;}
+.evt-time{font-size:.72rem;color:var(--muted);flex-shrink:0;}
 .evt-empty{font-size:.68rem;color:var(--muted);text-align:center;padding:14px 0;letter-spacing:.1em;}
 
 /* history */
@@ -233,8 +233,8 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
   padding:18px;width:100%;margin-bottom:12px;cursor:pointer;transition:border-color .2s;}
 .history-item:hover{border-color:var(--accent);}
 .history-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.history-date{font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);}
-.history-location{font-size:.65rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;}
+.history-date{font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);}
+.history-location{font-size:.78rem;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px;}
 .history-total{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:800;color:var(--success);}
 .history-tags{display:flex;flex-wrap:wrap;gap:6px;}
 .history-tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
@@ -276,8 +276,8 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
 .toggle-row:last-child{border-bottom:none;}
-.toggle-label{font-size:.8rem;color:var(--text);}
-.toggle-sub{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.toggle-label{font-size:.95rem;font-weight:700;color:var(--text);}
+.toggle-sub{font-size:.75rem;color:var(--muted);margin-top:2px;}
 .toggle{position:relative;width:44px;height:26px;flex-shrink:0;}
 .toggle input{opacity:0;width:0;height:0;}
 .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:13px;cursor:pointer;transition:.2s;}
@@ -373,7 +373,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         <div class="card-label" style="margin-bottom:0;">⚙️ Einstellungen</div>
         <span id="settingsChevron" style="color:var(--muted);font-size:.8rem;transition:transform .2s;">▼</span>
       </button>
-      <div id="settingsBody" style="display:none;margin-bottom:6px;">
+      <div id="settingsBody" style="display:none;margin-bottom:6px;overflow:hidden;">
         <div class="toggle-row">
           <div>
             <div class="toggle-label">📡 GPS-Ortserkennung</div>
@@ -408,9 +408,9 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       </div></div>
       <div style="height:1px;background:var(--border);margin:8px 0 16px;"></div>
       <div id="preset-list-view">
-        <div class="card-label" style="margin-bottom:10px;">📍 Meine Orte</div>
+        <div class="card-label" style="margin-bottom:12px;font-size:.78rem;">📍 Meine Orte</div>
         <div id="presetList"></div>
-        <div class="card-label" style="margin:20px 0 10px;">Verlauf</div>
+        <div class="card-label" style="margin:24px 0 12px;font-size:.78rem;">Verlauf</div>
       </div>
       <div id="preset-edit-view" style="display:none;"></div>
       <div id="history-list-view"></div>
