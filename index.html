@@ -282,14 +282,43 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .toggle-slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
 .toggle input:checked + .toggle-slider{background:var(--accent);}
 .toggle input:checked + .toggle-slider:before{transform:translateX(18px);}
+/* ── Radar ── */
+.radar-wrap{position:relative;width:120px;height:120px;margin:0 auto 20px;}
+.radar-svg{width:120px;height:120px;}
+.radar-ring{fill:none;stroke:#1f9d63;stroke-width:1;}
+.radar-cross{stroke:#1f9d63;stroke-width:1.2;opacity:.4;}
+.radar-dot{fill:#1f9d63;}
+.radar-sweep{
+  transform-origin:60px 60px;
+  animation:radar-spin 2s linear infinite;
+}
+.radar-pulse{
+  fill:none;stroke:#1f9d63;stroke-width:1.5;
+  transform-origin:60px 60px;
+  animation:radar-ping 2s ease-out infinite;
+  opacity:0;
+}
+.radar-pulse:nth-child(2){animation-delay:.65s;}
+.radar-pulse:nth-child(3){animation-delay:1.3s;}
+@keyframes radar-spin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+@keyframes radar-ping{
+  0%  {r:8px;opacity:.7;}
+  100%{r:54px;opacity:0;}
+}
 #venueModal{display:none;position:fixed;inset:0;z-index:500;background:rgba(70,52,30,.45);align-items:flex-end;}
 #venueModal.open{display:flex;}
-#venueSheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px 20px 36px;max-height:70vh;overflow-y:auto;}
+#venueSheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px 20px 36px;max-height:82vh;overflow-y:auto;}
+#venueMap{width:100%;height:220px;border-radius:14px;overflow:hidden;margin-bottom:16px;display:none;}
 .venue-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
 .venue-item:last-child{border-bottom:none;}
 .venue-item:active{opacity:.7;}
 .venue-dist{font-size:.65rem;color:var(--muted);margin-top:2px;}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -315,6 +344,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       <div style="font-size:.85rem;font-weight:700;color:var(--text);">📍 Lokale in der Nähe</div>
       <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;" onclick="closeVenuePicker()">✕</button>
     </div>
+    <div id="venueMap"></div>
     <div id="venueList"></div>
   </div>
 </div>
@@ -1132,8 +1162,36 @@ function openCloseEveningWithGps() {
   if (!gpsEnabled) { openCloseEvening(); return; }
   // Sofort Venue-Sheet mit Ladeindikator zeigen
   document.getElementById('venueList').innerHTML = `
-    <div style="text-align:center;padding:32px 0;color:var(--muted);">
-      <div style="font-size:1.8rem;margin-bottom:12px;">📡</div>
+    <div style="text-align:center;padding:24px 0 28px;color:var(--muted);">
+      <div class="radar-wrap">
+        <svg class="radar-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <!-- Konzentrische Ringe -->
+          <circle class="radar-ring" cx="60" cy="60" r="54"/>
+          <circle class="radar-ring" cx="60" cy="60" r="40"/>
+          <circle class="radar-ring" cx="60" cy="60" r="26"/>
+          <circle class="radar-ring" cx="60" cy="60" r="12"/>
+          <!-- Fadenkreuz -->
+          <line class="radar-cross" x1="60" y1="6" x2="60" y2="114"/>
+          <line class="radar-cross" x1="6" y1="60" x2="114" y2="60"/>
+          <!-- Sweep-Strahl -->
+          <g class="radar-sweep">
+            <path d="M60 60 L60 6 A54 54 0 0 1 108 78 Z"
+              fill="url(#sweepGrad)" opacity=".85"/>
+            <defs>
+              <radialGradient id="sweepGrad" cx="60" cy="60" r="54" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1f9d63" stop-opacity=".9"/>
+                <stop offset="100%" stop-color="#1f9d63" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+          </g>
+          <!-- Ping-Ringe -->
+          <circle class="radar-pulse" cx="60" cy="60" r="8"/>
+          <circle class="radar-pulse" cx="60" cy="60" r="8"/>
+          <circle class="radar-pulse" cx="60" cy="60" r="8"/>
+          <!-- Mittelpunkt -->
+          <circle class="radar-dot" cx="60" cy="60" r="4"/>
+        </svg>
+      </div>
       <div style="font-size:.8rem;">Suche Lokale in der Nähe…</div>
     </div>`;
   document.getElementById('venueModal').classList.add('open');
@@ -1157,12 +1215,14 @@ out body 15;`;
       .map(e => ({
         name: e.tags.name,
         type: e.tags.amenity,
+        lat: e.lat,
+        lon: e.lon,
         dist: Math.round(haversine(lat, lon, e.lat, e.lon)),
       }))
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 8);
     if (venues.length === 0) { closeVenuePicker(); openCloseEvening(); return; }
-    showVenuePicker(venues);
+    showVenuePicker(venues, lat, lon);
   } catch(e) { closeVenuePicker(); openCloseEvening(); }
 }
 function haversine(la1, lo1, la2, lo2) {
@@ -1172,7 +1232,9 @@ function haversine(la1, lo1, la2, lo2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 const VENUE_ICONS = { bar:'🍸', pub:'🍺', restaurant:'🍽', cafe:'☕', biergarten:'🌿', nightclub:'🎵' };
-function showVenuePicker(venues) {
+let _leafletMap = null;
+function showVenuePicker(venues, userLat, userLon) {
+  // Liste aufbauen
   document.getElementById('venueList').innerHTML =
     venues.map(v => `
       <div class="venue-item" onclick="pickVenue('${esc(v.name).replace(/'/g,"\'")}')">
@@ -1186,7 +1248,58 @@ function showVenuePicker(venues) {
       <span style="font-size:1.4rem">✏️</span>
       <div style="font-size:.85rem;color:var(--muted);">Manuell eingeben</div>
     </div>`;
-  // Modal ist schon offen (Ladeindikator) – nur Inhalt updaten
+
+  // Karte einblenden
+  if (userLat && typeof L !== 'undefined') {
+    const mapEl = document.getElementById('venueMap');
+    mapEl.style.display = 'block';
+
+    // Bestehende Karte zerstören wenn vorhanden
+    if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
+
+    // Kurz warten damit das Div sichtbar ist, dann initialisieren
+    setTimeout(() => {
+      _leafletMap = L.map('venueMap', { zoomControl: false, attributionControl: false })
+        .setView([userLat, userLon], 17);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(_leafletMap);
+
+      // Eigener Standort – blauer Kreis
+      L.circleMarker([userLat, userLon], {
+        radius: 8, fillColor: '#3b82f6', color: '#fff',
+        weight: 2, fillOpacity: 1
+      }).addTo(_leafletMap);
+
+      // Lokale als Pins
+      const accent = getComputedStyle(document.documentElement)
+        .getPropertyValue('--accent').trim() || '#e0701f';
+      venues.forEach(v => {
+        if (!v.lat || !v.lon) return;
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="
+            background:${accent};color:#fff;border-radius:50% 50% 50% 0;
+            width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+            font-size:13px;transform:rotate(-45deg);border:2px solid #fff;
+            box-shadow:0 2px 6px rgba(0,0,0,.25);">
+            <span style="transform:rotate(45deg)">${VENUE_ICONS[v.type] || '📍'}</span>
+          </div>`,
+          iconSize: [28, 28], iconAnchor: [14, 28]
+        });
+        L.marker([v.lat, v.lon], { icon })
+          .addTo(_leafletMap)
+          .bindPopup(`<b>${v.name}</b><br>${v.dist} m`);
+      });
+
+      // Karte auf alle Punkte einzoomen
+      const allPts = [[userLat, userLon], ...venues.filter(v => v.lat).map(v => [v.lat, v.lon])];
+      if (allPts.length > 1) {
+        _leafletMap.fitBounds(L.latLngBounds(allPts), { padding: [24, 24], maxZoom: 17 });
+      }
+    }, 80);
+  }
 }
 function pickVenue(name) {
   closeVenuePicker();
@@ -1195,6 +1308,8 @@ function pickVenue(name) {
 }
 function closeVenuePicker() {
   document.getElementById('venueModal').classList.remove('open');
+  document.getElementById('venueMap').style.display = 'none';
+  if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
 }
 
 // ── Tempo-Anzeige ─────────────────────────────────────────────────────────────
