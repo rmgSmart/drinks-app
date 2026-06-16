@@ -804,6 +804,7 @@ function startRing(circ, duration, onDone) {
 function renderDrinkTypes() {
   const wrap = document.getElementById('drinkTypes');
   if (drinkTypes.length === 0) {
+    wrap.innerHTML = '';
     return;
   }
   wrap.innerHTML = drinkTypes.map(dt => `
