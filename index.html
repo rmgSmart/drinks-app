@@ -365,7 +365,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 <div class="drawer-bg" id="drawerBg" onclick="closeDrawer(event)">
   <div class="drawer" id="drawer">
     <div class="drawer-header">
-      <div class="drawer-title"></div>
+      <div class="drawer-title">Menü</div>
       <button class="drawer-close" onclick="closeDrawer()">✕</button>
     </div>
     <div class="drawer-body">
@@ -407,14 +407,27 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         </div>
       </div>
       <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
-      <div id="preset-list-view">
-        <div class="card-label" style="margin-bottom:12px;font-size:.78rem;">Meine Orte</div>
-        <div id="presetList"></div>
-        <div class="card-label" style="margin:24px 0 12px;font-size:.78rem;">Verlauf</div>
+      <button onclick="toggleAccordion('presetWrap','presetChevron')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
+        <div class="card-label" style="margin-bottom:0;">Meine Orte</div>
+        <span id="presetChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
+      </button>
+      <div id="presetWrap" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">
+        <div id="preset-list-view">
+          <div id="presetList"></div>
+        </div>
+        <div id="preset-edit-view" style="display:none;"></div>
       </div>
-      <div id="preset-edit-view" style="display:none;"></div>
-      <div id="history-list-view"></div>
-      <div id="history-detail-view" style="display:none;"></div>
+
+      <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
+
+      <button onclick="toggleAccordion('verlaufWrap','verlaufChevron')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
+        <div class="card-label" style="margin-bottom:0;">Verlauf</div>
+        <span id="verlaufChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
+      </button>
+      <div id="verlaufWrap" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">
+        <div id="history-list-view"></div>
+        <div id="history-detail-view" style="display:none;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -492,12 +505,8 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       <button class="chip" onclick="setTipChip(20)">20 %</button>
     </div>
     <div class="input-row">
-      <input type="text" inputmode="decimal" id="m-tip" placeholder="0" oninput="syncTipChips()">
+      <input type="text" inputmode="decimal" id="m-tip" placeholder="0" oninput="syncTipChips(); applyTipLive()">
       <span class="input-suffix">%</span>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-settings')">Abbrechen</button>
-      <button class="btn btn-primary btn-modal-save" onclick="saveSettings()">Speichern</button>
     </div>
   </div>
 </div>
@@ -562,6 +571,11 @@ function totalTip()      { return totalSubtotal() * tipPct / 100; }
 function setTipChip(val) {
   document.getElementById('m-tip').value = val;
   syncTipChips();
+  tipPct = val;
+  updatePill();
+  renderSummary();
+  save();
+  closeModal('modal-settings');
 }
 function syncTipChips() {
   const val = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
@@ -569,6 +583,12 @@ function syncTipChips() {
     const cv = parseFloat(c.textContent);
     c.classList.toggle('active', cv === val);
   });
+}
+function applyTipLive() {
+  tipPct = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
+  updatePill();
+  renderSummary();
+  save();
 }
 function totalGrand()    { return totalSubtotal() + totalTip(); }
 
@@ -595,14 +615,6 @@ function openModal(id) {
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-function saveSettings() {
-  tipPct = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
-  closeModal('modal-settings');
-  updatePill();
-  renderSummary();
-  save();
-}
 
 // ── Pill ──────────────────────────────────────────────────────────────────────
 function updatePill() {
@@ -916,6 +928,7 @@ function renderHistory() {
   detailView.style.display = 'none';
   listView.style.display = 'block';
   if (!_editPresetId) document.getElementById('preset-list-view').style.display = 'block';
+  refreshOpenAccordions();
 
   if (history.length === 0) {
     listView.innerHTML = '<div class="history-empty">Noch keine gespeicherten Abende.<br>Schließe einen Abend ab um ihn hier zu sehen.</div>';
@@ -1028,17 +1041,27 @@ function checkLogo(img, fallbackId) {
 }
 
 // ── Settings Accordion ────────────────────────────────────────────────────────
-function toggleSettings() {
-  const body = document.getElementById('settingsBody');
-  const chev = document.getElementById('settingsChevron');
+function toggleAccordion(bodyId, chevId) {
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(chevId);
   const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
   if (isOpen) {
     body.style.maxHeight = '0px';
     chev.style.transform = '';
   } else {
-    body.style.maxHeight = (body.scrollHeight + 300) + 'px';
+    body.style.maxHeight = (body.scrollHeight + 400) + 'px'; // Puffer für dynamische Inhalte
     chev.style.transform = 'rotate(180deg)';
   }
+}
+function toggleSettings() { toggleAccordion('settingsBody', 'settingsChevron'); }
+function refreshOpenAccordions() {
+  // Falls eine Sektion offen ist und sich der Inhalt geändert hat: Höhe nachziehen
+  ['presetWrap', 'verlaufWrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.style.maxHeight && el.style.maxHeight !== '0px') {
+      el.style.maxHeight = (el.scrollHeight + 400) + 'px';
+    }
+  });
 }
 
 // ── Dark Mode ────────────────────────────────────────────────────────────────
@@ -1432,6 +1455,7 @@ function renderPresetList() {
   const el = document.getElementById('presetList');
   document.getElementById('preset-edit-view').style.display = 'none';
   document.getElementById('preset-list-view').style.display = 'block';
+  refreshOpenAccordions();
   if (locationPresets.length === 0) {
     el.innerHTML = '<div class="evt-empty" style="padding:10px 0;">Wird automatisch angelegt, sobald du einen Abend mit Ort abschließt.</div>';
     return;
