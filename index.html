@@ -504,10 +504,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       <button class="chip" onclick="setTipChip(15)">15 %</button>
       <button class="chip" onclick="setTipChip(20)">20 %</button>
     </div>
-    <div class="input-row">
-      <input type="text" inputmode="decimal" id="m-tip" placeholder="0" oninput="syncTipChips(); applyTipLive()">
-      <span class="input-suffix">%</span>
-    </div>
+    <input type="hidden" id="m-tip">
   </div>
 </div>
 
@@ -1466,7 +1463,7 @@ function renderPresetList() {
         <div class="history-location" style="font-size:.85rem;">📍 ${esc(p.name)}</div>
         <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${p.drinks.length} Getränk${p.drinks.length === 1 ? '' : 'e'} · antippen zum Bearbeiten ✎</div>
       </div>
-      <button class="btn btn-primary" style="height:34px;padding:0 14px;border-radius:10px;font-size:.62rem;flex-shrink:0;" onclick="loadPreset(${p.id})">↧ Laden</button>
+      <button class="btn btn-primary" style="height:34px;padding:0 14px;border-radius:10px;font-size:.62rem;flex-shrink:0;" onclick="loadPreset(${p.id})">⇧ Preise laden</button>
     </div>`).join('');
 }
 
