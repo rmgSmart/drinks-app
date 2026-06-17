@@ -714,8 +714,7 @@ function logoHtml(name) {
     const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
     return `
       <div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
-        <img id="${id}" class="drink-logo-img" src="${url}" alt="${esc(name)}" crossorigin="anonymous"
-          onload="checkLogo(this,'${id}-fb')"
+        <img id="${id}" class="drink-logo-img" src="${url}" alt="${esc(name)}"
           onerror="this.style.display='none';document.getElementById('${id}-fb').style.display='flex'">
         <div id="${id}-fb" class="drink-logo-emoji-fb" style="display:none">${emoji}</div>
       </div>`;
@@ -1013,21 +1012,18 @@ function esc(s) {
 }
 
 // ── Logo Globe Detection ──────────────────────────────────────────────────────
-function checkLogo(img, fallbackId) {
-  // Draw to canvas and check if it's the generic grey globe (very uniform color)
+function checkLogo_UNUSED(img, fallbackId) {
   try {
     const c = document.createElement('canvas');
     c.width = c.height = 16;
     const ctx = c.getContext('2d');
     ctx.drawImage(img, 0, 0, 16, 16);
     const d = ctx.getImageData(0, 0, 16, 16).data;
-    // Count unique colors — globe has very few, real logos have many
     const colors = new Set();
     for (let i = 0; i < d.length; i += 4) {
       if (d[i+3] > 10) colors.add(`${Math.round(d[i]/32)},${Math.round(d[i+1]/32)},${Math.round(d[i+2]/32)}`);
     }
     if (colors.size < 6) {
-      // Looks like generic icon — show emoji
       img.style.display = 'none';
       document.getElementById(fallbackId).style.display = 'flex';
     } else {
