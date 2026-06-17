@@ -1,9 +1,9 @@
-const CACHE = 'drinks-v35';
+const CACHE = 'drinks-v36';
 const FILES = [
   './',
   './index.html',
   './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap'
 ];
 
 self.addEventListener('install', e => {
