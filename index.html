@@ -622,27 +622,33 @@ function updatePill() {
 // ── Brand Logo Database ───────────────────────────────────────────────────────
 const BRAND_DB = [
   // ── Österreichische Biere ──
-  { keys: ['gösser','gosser'],          domain: 'goesser.at',          emoji: '🍺', color: '#1a5c1a' },
+  { keys: ['gösser','gosser'],          domain: 'goesser.at',          emoji: '🍺', color: '#1a5c1a', logo: 'logos/goesser.png' },
   { keys: ['schwechater'],              domain: 'schwechater.at',       emoji: '🍺', color: '#c8a020' },
-  { keys: ['ottakringer'],              domain: 'ottakringer.at',       emoji: '🍺', color: '#c8372d' },
-  { keys: ['zipfer'],                   domain: 'zipfer.at',            emoji: '🍺', color: '#1a5fa8' },
-  { keys: ['puntigamer'],               domain: 'puntigamer.at',        emoji: '🍺', color: '#c8372d' },
-  { keys: ['wieselburger'],             domain: 'wieselburger.at',      emoji: '🍺', color: '#e8a020' },
-  { keys: ['hirter'],                   domain: null,                   emoji: '🍺', color: '#2d6a1f' },
-  { keys: ['murauer'],                  domain: null,                   emoji: '🍺', color: '#1a5fa8' },
-  { keys: ['kaiser'],                   domain: null,                   emoji: '🍺', color: '#c8a020' },
+  { keys: ['ottakringer'],              domain: 'ottakringer.at',       emoji: '🍺', color: '#c8372d', logo: 'logos/ottakringer.png' },
+  { keys: ['zipfer'],                   domain: 'zipfer.at',            emoji: '🍺', color: '#1a5fa8', logo: 'logos/zipfer.png' },
+  { keys: ['puntigamer'],               domain: 'puntigamer.at',        emoji: '🍺', color: '#c8372d', logo: 'logos/puntigamer.png' },
+  { keys: ['wieselburger'],             domain: 'wieselburger.at',      emoji: '🍺', color: '#e8a020', logo: 'logos/wieselburger.png' },
+  { keys: ['hirter'],                   domain: null,                   emoji: '🍺', color: '#2d6a1f', logo: 'logos/hirter.png' },
+  { keys: ['murauer'],                  domain: null,                   emoji: '🍺', color: '#1a5fa8', logo: 'logos/murauer.png' },
+  { keys: ['kaiser'],                   domain: null,                   emoji: '🍺', color: '#c8a020', logo: 'logos/kaiser.png' },
   { keys: ['obertrummer'],              domain: null,                   emoji: '🍺', color: '#2d6a1f' },
   { keys: ['schwarz','schwarz bier'],   domain: null,                   emoji: '🍺', color: '#1a1a1a' },
-  { keys: ['stiegl'],                   domain: 'stiegl.at',            emoji: '🍺', color: '#c8372d' },
+  { keys: ['stiegl'],                   domain: 'stiegl.at',            emoji: '🍺', color: '#c8372d', logo: 'logos/stiegl.png' },
   { keys: ['augustinerkeller'],         domain: null,                   emoji: '🍺', color: '#c8920a' },
   { keys: ['schwadorf'],                domain: null,                   emoji: '🍺', color: '#2d6a1f' },
-  { keys: ['villacher'],                domain: null,                   emoji: '🍺', color: '#1a5fa8' },
+  { keys: ['villacher'],                domain: null,                   emoji: '🍺', color: '#1a5fa8', logo: 'logos/villacher.png' },
   { keys: ['grieskirchner'],            domain: null,                   emoji: '🍺', color: '#c8a020' },
   { keys: ['gmundner'],                 domain: null,                   emoji: '🍺', color: '#2d6a1f' },
-  { keys: ['schremser'],                domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['schremser'],                domain: null,                   emoji: '🍺', color: '#2d6a1f', logo: 'logos/schremser.png' },
   { keys: ['zwettler'],                 domain: null,                   emoji: '🍺', color: '#c8a020' },
   { keys: ['freistädter'],              domain: null,                   emoji: '🍺', color: '#1a5fa8' },
   { keys: ['hirt','hirtenbräu'],        domain: null,                   emoji: '🍺', color: '#2d6a1f' },
+  { keys: ['egger'],                    domain: null,                   emoji: '🍺', color: '#a8232f', logo: 'logos/egger.png' },
+  { keys: ['schnaitl'],                 domain: null,                   emoji: '🍺', color: '#c8372d', logo: 'logos/schnaitl.png' },
+  { keys: ['trumer','trumer pils'],     domain: null,                   emoji: '🍺', color: '#c8372d', logo: 'logos/trumer.png' },
+  { keys: ['pilsner urquell','pilsner','urquell'], domain: null,        emoji: '🍺', color: '#1a7a2e', logo: 'logos/pilsner.png' },
+  { keys: ['starobrno'],                domain: null,                   emoji: '🍺', color: '#1a5c1a', logo: 'logos/starobrno.png' },
+  { keys: ['kozel'],                    domain: null,                   emoji: '🍺', color: '#1a1a1a', logo: 'logos/kozel.png' },
   // ── Bayerische Biere ──
   { keys: ['tegernseer'],               domain: 'tegernseer.de',        emoji: '🍺', color: '#1a5fa8' },
   { keys: ['paulaner'],                 domain: 'paulaner.de',          emoji: '🍺', color: '#1a5fa8' },
@@ -655,8 +661,8 @@ const BRAND_DB = [
   { keys: ['andechs'],                  domain: 'andechs.de',           emoji: '🍺', color: '#c8372d' },
   { keys: ['ayinger'],                  domain: 'ayinger.de',           emoji: '🍺', color: '#2d6a1f' },
   // ── Internationale Biere ──
-  { keys: ['heineken'],                 domain: 'heineken.com',         emoji: '🍺', color: '#1a7a2e' },
-  { keys: ['budweiser','bud'],          domain: 'budweiser.com',        emoji: '🍺', color: '#c8372d' },
+  { keys: ['heineken'],                 domain: 'heineken.com',         emoji: '🍺', color: '#1a7a2e', logo: 'logos/heineken.png' },
+  { keys: ['budweiser','bud','budvar'],  domain: 'budweiser.com',        emoji: '🍺', color: '#c8372d', logo: 'logos/budweiser.png' },
   { keys: ['corona'],                   domain: 'corona.com',           emoji: '🍺', color: '#d4c020' },
   { keys: ['stella artois','stella'],   domain: 'stellaartois.com',     emoji: '🍺', color: '#b8960a' },
   { keys: ['guinness'],                 domain: 'guinness.com',         emoji: '🍺', color: '#1a1a1a' },
@@ -705,19 +711,17 @@ function getBrandInfo(name) {
 
 function logoHtml(name) {
   const brand = getBrandInfo(name);
-  const emoji  = brand ? brand.emoji : '🥃';
-  const color  = brand ? brand.color : '#2e2e38';
-  const domain = brand ? brand.domain : null;
-  const id     = 'logo-' + Math.random().toString(36).slice(2);
-
-  if (domain) {
-    const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
-    return `
-      <div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
-        <img id="${id}" class="drink-logo-img" src="${url}" alt="${esc(name)}"
-          onerror="this.style.display='none';document.getElementById('${id}-fb').style.display='flex'">
-        <div id="${id}-fb" class="drink-logo-emoji-fb" style="display:none">${emoji}</div>
-      </div>`;
+  const emoji = brand ? brand.emoji : '🥃';
+  const color = brand ? brand.color : '#2e2e38';
+  // Eigene, lokal im Repo liegende Logos (zuverlässig, kein externer Dienst).
+  // Fallback: Emoji, falls kein lokales Logo für die Marke hinterlegt ist.
+  if (brand && brand.logo) {
+    const id = 'logo-' + Math.random().toString(36).slice(2);
+    return `<div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
+      <img class="drink-logo-img" src="${brand.logo}" alt="${esc(name)}"
+        onerror="this.style.display='none';document.getElementById('${id}-fb').style.display='flex'">
+      <div id="${id}-fb" class="drink-logo-emoji-fb" style="display:none">${emoji}</div>
+    </div>`;
   }
   return `<div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
     <div class="drink-logo-emoji-fb">${emoji}</div>
