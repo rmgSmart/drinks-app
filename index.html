@@ -782,6 +782,7 @@ function addOne(id) {
   startRing(circ, COOLDOWN, () => {
     dt.cooldown = false;
     if (btn) { btn.disabled = false; btn.classList.remove('cooling'); }
+    renderDrinkTypes();
   });
   if (dt.timer) clearTimeout(dt.timer);
   dt.timer = setTimeout(() => { dt.cooldown = false; if (btn) { btn.disabled = false; btn.classList.remove('cooling'); } }, COOLDOWN);
@@ -1190,6 +1191,7 @@ function initSwipe() {
             if (btn) { btn.disabled = true; btn.classList.remove('cooling'); btn.classList.add('cooling-sub'); }
             startRing(circ, COOLDOWN, () => {
               if (btn) { btn.disabled = false; btn.classList.remove('cooling-sub'); }
+              renderDrinkTypes();
             });
             if (dt.timer) clearTimeout(dt.timer);
             dt.timer = setTimeout(() => {

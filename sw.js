@@ -1,4 +1,4 @@
-const CACHE = 'drinks-v39';
+const CACHE = 'drinks-v40';
 const FILES = [
   './',
   './index.html',
