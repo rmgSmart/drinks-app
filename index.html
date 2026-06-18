@@ -419,7 +419,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 
       <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
 
-      <button onclick="toggleAccordion('verlaufWrap','verlaufChevron')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
+      <button onclick="toggleVerlaufSection()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
         <div class="card-label" style="margin-bottom:0;">Verlauf</div>
         <span id="verlaufChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
       </button>
@@ -1059,6 +1059,16 @@ function toggleAccordion(bodyId, chevId) {
   }
 }
 function toggleSettings() { toggleAccordion('settingsBody', 'settingsChevron'); }
+function toggleVerlaufSection() {
+  const wasOpen = document.getElementById('verlaufWrap').style.maxHeight &&
+                  document.getElementById('verlaufWrap').style.maxHeight !== '0px';
+  toggleAccordion('verlaufWrap', 'verlaufChevron');
+  if (wasOpen) {
+    // Beim Zuklappen: zurück auf Listenansicht, damit man beim nächsten Öffnen
+    // nicht noch in der Detailansicht eines Abends "hängt".
+    renderHistory();
+  }
+}
 function refreshOpenAccordions() {
   // Falls eine Sektion offen ist und sich der Inhalt geändert hat: Höhe nachziehen
   ['presetWrap', 'verlaufWrap'].forEach(id => {
