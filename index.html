@@ -936,10 +936,10 @@ function renderHistory() {
   detailView.style.display = 'none';
   listView.style.display = 'block';
   if (!_editPresetId) document.getElementById('preset-list-view').style.display = 'block';
-  refreshOpenAccordions();
 
   if (history.length === 0) {
     listView.innerHTML = '<div class="history-empty">Noch keine gespeicherten Abende.<br>Schließe einen Abend ab um ihn hier zu sehen.</div>';
+    refreshOpenAccordions();
     return;
   }
   listView.innerHTML = history.map(h => `
@@ -956,6 +956,7 @@ function renderHistory() {
         <div class="history-tag">Tip <span>${h.tipPct}%</span></div>
       </div>
     </div>`).join('');
+  refreshOpenAccordions();
 }
 
 function showHistoryDetail(id) {
@@ -1008,6 +1009,7 @@ function showHistoryDetail(id) {
     <button class="btn btn-danger" style="width:100%;height:42px;border-radius:12px;margin-top:4px;" onclick="deleteHistory(${h.id})">
       🗑 &nbsp;Abend löschen
     </button>`;
+  refreshOpenAccordions();
 }
 
 function deleteHistory(id) {
@@ -1481,9 +1483,9 @@ function renderPresetList() {
   const el = document.getElementById('presetList');
   document.getElementById('preset-edit-view').style.display = 'none';
   document.getElementById('preset-list-view').style.display = 'block';
-  refreshOpenAccordions();
   if (locationPresets.length === 0) {
     el.innerHTML = '<div class="evt-empty" style="padding:10px 0;">Wird automatisch angelegt, sobald du einen Abend mit Ort abschließt.</div>';
+    refreshOpenAccordions();
     return;
   }
   el.innerHTML = locationPresets.map(p => `
@@ -1494,6 +1496,7 @@ function renderPresetList() {
       </div>
       <button class="btn btn-primary" style="height:34px;padding:0 14px;border-radius:10px;font-size:.62rem;flex-shrink:0;" onclick="loadPreset(${p.id})">⇧ Preise laden</button>
     </div>`).join('');
+  refreshOpenAccordions();
 }
 
 function loadPreset(id) {
