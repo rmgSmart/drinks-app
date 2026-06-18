@@ -1547,6 +1547,7 @@ function renderPresetEditor() {
     </div>
     <button class="btn btn-primary" style="width:100%;height:44px;border-radius:12px;margin-bottom:10px;" onclick="loadPreset(${p.id})">↧ &nbsp;In die App laden</button>
     <button class="btn btn-danger" style="width:100%;height:38px;border-radius:10px;" onclick="deletePreset()">🗑 &nbsp;Ort löschen</button>`;
+  refreshOpenAccordions();
 }
 function presetName(v) {
   const p = locationPresets.find(x => x.id === _editPresetId);
