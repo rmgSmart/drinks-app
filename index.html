@@ -372,7 +372,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         <div class="card-label" style="margin-bottom:0;">Einstellungen</div>
         <span id="settingsChevron" style="color:var(--muted);font-size:.8rem;transition:transform .2s;">▼</span>
       </button>
-      <div id="settingsBody" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">
+      <div id="settingsBody" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);">
         <div class="toggle-row">
           <div>
             <div class="toggle-label">Ortserkennung</div>
@@ -406,11 +406,11 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         </div>
       </div>
       <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
-      <button onclick="toggleAccordion('presetWrap','presetChevron')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
+      <button onclick="togglePresetSection()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
         <div class="card-label" style="margin-bottom:0;">Meine Orte</div>
         <span id="presetChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
       </button>
-      <div id="presetWrap" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">
+      <div id="presetWrap" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);">
         <div id="preset-list-view">
           <div id="presetList"></div>
         </div>
@@ -423,7 +423,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
         <div class="card-label" style="margin-bottom:0;">Verlauf</div>
         <span id="verlaufChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
       </button>
-      <div id="verlaufWrap" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">
+      <div id="verlaufWrap" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);">
         <div id="history-list-view"></div>
         <div id="history-detail-view" style="display:none;"></div>
       </div>
@@ -1054,11 +1054,21 @@ function toggleAccordion(bodyId, chevId) {
     body.style.maxHeight = '0px';
     chev.style.transform = '';
   } else {
-    body.style.maxHeight = (body.scrollHeight + 400) + 'px'; // Puffer für dynamische Inhalte
+    body.style.maxHeight = body.scrollHeight + 'px';
     chev.style.transform = 'rotate(180deg)';
   }
 }
 function toggleSettings() { toggleAccordion('settingsBody', 'settingsChevron'); }
+function togglePresetSection() {
+  const wasOpen = document.getElementById('presetWrap').style.maxHeight &&
+                  document.getElementById('presetWrap').style.maxHeight !== '0px';
+  toggleAccordion('presetWrap', 'presetChevron');
+  if (wasOpen) {
+    // Beim Zuklappen: zurück auf Listenansicht statt im Bearbeiten-Modus eines Ortes zu bleiben.
+    _editPresetId = null;
+    renderPresetList();
+  }
+}
 function toggleVerlaufSection() {
   const wasOpen = document.getElementById('verlaufWrap').style.maxHeight &&
                   document.getElementById('verlaufWrap').style.maxHeight !== '0px';
@@ -1074,7 +1084,7 @@ function refreshOpenAccordions() {
   ['presetWrap', 'verlaufWrap'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.style.maxHeight && el.style.maxHeight !== '0px') {
-      el.style.maxHeight = (el.scrollHeight + 400) + 'px';
+      el.style.maxHeight = el.scrollHeight + 'px';
     }
   });
 }
