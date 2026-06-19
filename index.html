@@ -212,6 +212,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .stat-label{font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
 .stat-value{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);}
 .stat-value.hi{color:var(--accent);font-size:1.7rem;}
+.stat-value.accent{color:var(--accent);}
 .total-line{border-top:1px solid var(--border);padding-top:15px;display:flex;justify-content:space-between;align-items:center;}
 .total-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
 .total-value{font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800;color:var(--success);}
@@ -456,10 +457,10 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
   <div class="card">
     <div class="card-label">Abrechnung</div>
     <div class="summary-grid">
-      <div class="stat-box"><div class="stat-label">Gesamt Drinks</div><div class="stat-value hi" id="sumCount">0</div></div>
+      <div class="stat-box"><div class="stat-label">Gesamt Drinks</div><div class="stat-value" id="sumCount">0</div></div>
       <div class="stat-box"><div class="stat-label">Subtotal</div><div class="stat-value" id="sumSubtotal">€ 0,00</div></div>
       <div class="stat-box"><div class="stat-label">Trinkgeld</div><div class="stat-value" id="sumTip">€ 0,00</div></div>
-      <div class="stat-box" style="cursor:pointer;" onclick="openModal('modal-settings')"><div class="stat-label">Trinkgeld % ✎</div><div class="stat-value" id="sumTipPct">10 %</div></div>
+      <div class="stat-box" style="cursor:pointer;" onclick="openModal('modal-settings')"><div class="stat-label">Trinkgeld % ✎</div><div class="stat-value accent" id="sumTipPct">10 %</div></div>
     </div>
     <div class="total-line">
       <div class="total-label">Gesamt</div>
