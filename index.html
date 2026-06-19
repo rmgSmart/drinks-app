@@ -434,12 +434,6 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 <!-- ════════════════════════════════ MAIN SCREEN ════════════════════════════════ -->
 <div class="screen active" id="screen-main">
 
-  <!-- settings pill -->
-  <div class="settings-pill" onclick="openModal('modal-settings')">
-    <div class="pill-item"><span>🤝</span><span id="pill-tip" class="pill-val">10 %</span><span>Trinkgeld</span></div>
-
-  </div>
-
   <!-- drink type list -->
   <div class="drink-types" id="drinkTypes"></div>
 
@@ -465,7 +459,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
       <div class="stat-box"><div class="stat-label">Gesamt Drinks</div><div class="stat-value hi" id="sumCount">0</div></div>
       <div class="stat-box"><div class="stat-label">Subtotal</div><div class="stat-value" id="sumSubtotal">€ 0,00</div></div>
       <div class="stat-box"><div class="stat-label">Trinkgeld</div><div class="stat-value" id="sumTip">€ 0,00</div></div>
-      <div class="stat-box"><div class="stat-label">Trinkgeld %</div><div class="stat-value" id="sumTipPct">10 %</div></div>
+      <div class="stat-box" style="cursor:pointer;" onclick="openModal('modal-settings')"><div class="stat-label">Trinkgeld % ✎</div><div class="stat-value" id="sumTipPct">10 %</div></div>
     </div>
     <div class="total-line">
       <div class="total-label">Gesamt</div>
@@ -597,6 +591,11 @@ function openDrawer() {
 function closeDrawer(e) {
   if (e && e.target !== document.getElementById('drawerBg')) return;
   document.getElementById('drawerBg').classList.remove('open');
+  // Beim Schließen alle Accordion-Sektionen wieder einklappen, damit das Menü
+  // beim nächsten Öffnen immer im gleichen, übersichtlichen Ausgangszustand ist.
+  closeAccordion('settingsBody', 'settingsChevron');
+  if (closeAccordion('presetWrap', 'presetChevron')) { _editPresetId = null; }
+  closeAccordion('verlaufWrap', 'verlaufChevron');
 }
 
 // ── Screen nav (kept for saveEvening redirect) ────────────────────────────────
@@ -612,9 +611,8 @@ function openModal(id) {
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// ── Pill ──────────────────────────────────────────────────────────────────────
+// ── Trinkgeld-Anzeige ─────────────────────────────────────────────────────────
 function updatePill() {
-  document.getElementById('pill-tip').textContent = tipPct.toFixed(0) + ' %';
   document.getElementById('sumTipPct').textContent = tipPct.toFixed(0) + ' %';
 }
 
