@@ -514,7 +514,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
     <div class="close-summary" id="closeSummary"></div>
     <div class="field-label">Ort / Bar</div>
     <div class="input-row">
-      <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
+      <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" oninput="updateLocChipsVisibility()" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
     </div>
     <div class="chips" id="locChips" style="margin:-4px 0 14px;"></div>
     <div class="modal-actions">
@@ -898,6 +898,7 @@ function openCloseEvening() {
   _recentLocs = recentLocations();
   document.getElementById('locChips').innerHTML = _recentLocs.map((l, i) =>
     `<button class="chip" onclick="pickLocation(${i})">📍 ${esc(l)}</button>`).join('');
+  updateLocChipsVisibility();
   openModal('modal-close');
 }
 
@@ -1465,7 +1466,7 @@ function showVenuePicker(venues, userLat, userLon) {
 function pickVenue(name) {
   closeVenuePicker();
   openCloseEvening();
-  if (name) setTimeout(() => document.getElementById('m-location').value = name, 50);
+  if (name) setTimeout(() => { document.getElementById('m-location').value = name; updateLocChipsVisibility(); }, 50);
 }
 function closeVenuePicker() {
   document.getElementById('venueModal').classList.remove('open');
@@ -1507,6 +1508,15 @@ function recentLocations() {
 }
 function pickLocation(i) {
   document.getElementById('m-location').value = _recentLocs[i];
+  updateLocChipsVisibility();
+}
+function updateLocChipsVisibility() {
+  const val = document.getElementById('m-location').value.trim();
+  const chipsEl = document.getElementById('locChips');
+  if (!chipsEl) return;
+  // Chips nur zeigen solange das Feld leer ist – ist schon ein Ort gewählt/eingetippt,
+  // sind die Vorschläge überflüssig und blenden sich aus.
+  chipsEl.style.display = val ? 'none' : 'flex';
 }
 
 function upsertPreset(loc, drinks) {
