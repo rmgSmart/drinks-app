@@ -919,7 +919,9 @@ function saveEvening() {
   closeModal('modal-close');
   resetSessionData(false);
   save();
-  openDrawer();
+  // Daten im Hintergrund aktuell halten, ohne das Menü automatisch zu öffnen
+  renderPresetList();
+  renderHistory();
 }
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
@@ -1075,12 +1077,33 @@ function toggleAccordion(bodyId, chevId) {
     body.style.maxHeight = body.scrollHeight + 'px';
     chev.style.transform = 'rotate(180deg)';
   }
+  return !isOpen; // true = wurde gerade geöffnet
 }
-function toggleSettings() { toggleAccordion('settingsBody', 'settingsChevron'); }
+function closeAccordion(bodyId, chevId) {
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(chevId);
+  if (body.style.maxHeight && body.style.maxHeight !== '0px') {
+    body.style.maxHeight = '0px';
+    chev.style.transform = '';
+    return true; // war offen, wurde geschlossen
+  }
+  return false;
+}
+function toggleSettings() {
+  const justOpened = toggleAccordion('settingsBody', 'settingsChevron');
+  if (justOpened) {
+    if (closeAccordion('presetWrap', 'presetChevron')) { _editPresetId = null; renderPresetList(); }
+    closeAccordion('verlaufWrap', 'verlaufChevron');
+  }
+}
 function togglePresetSection() {
   const wasOpen = document.getElementById('presetWrap').style.maxHeight &&
                   document.getElementById('presetWrap').style.maxHeight !== '0px';
-  toggleAccordion('presetWrap', 'presetChevron');
+  const justOpened = toggleAccordion('presetWrap', 'presetChevron');
+  if (justOpened) {
+    closeAccordion('settingsBody', 'settingsChevron');
+    closeAccordion('verlaufWrap', 'verlaufChevron');
+  }
   if (wasOpen) {
     // Beim Zuklappen: zurück auf Listenansicht statt im Bearbeiten-Modus eines Ortes zu bleiben.
     _editPresetId = null;
@@ -1090,7 +1113,11 @@ function togglePresetSection() {
 function toggleVerlaufSection() {
   const wasOpen = document.getElementById('verlaufWrap').style.maxHeight &&
                   document.getElementById('verlaufWrap').style.maxHeight !== '0px';
-  toggleAccordion('verlaufWrap', 'verlaufChevron');
+  const justOpened = toggleAccordion('verlaufWrap', 'verlaufChevron');
+  if (justOpened) {
+    closeAccordion('settingsBody', 'settingsChevron');
+    if (closeAccordion('presetWrap', 'presetChevron')) { _editPresetId = null; renderPresetList(); }
+  }
   if (wasOpen) {
     // Beim Zuklappen: zurück auf Listenansicht, damit man beim nächsten Öffnen
     // nicht noch in der Detailansicht eines Abends "hängt".
