@@ -120,15 +120,6 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .btn-danger{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
 .btn-danger:hover{border-color:var(--danger);color:var(--danger);}
 
-/* settings pill */
-.settings-pill{display:flex;align-items:center;gap:12px;background:var(--surface);
-  border:1px solid var(--border);border-radius:40px;padding:7px 16px;
-  margin-bottom:16px;width:100%;justify-content:center;cursor:pointer;transition:border-color .2s;}
-.settings-pill:hover{border-color:var(--accent);}
-.pill-item{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;}
-.pill-val{color:var(--accent);font-weight:700;font-size:1rem;}
-.pill-sep{width:1px;height:13px;background:var(--border);}
-.pill-edit{display:none;}
 
 /* drink type cards */
 .drink-types{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:14px;}
@@ -197,7 +188,6 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 }
 .drink-add-btn.cooling .cooldown-ring circle{opacity:1;}
 .drink-add-btn.cooling-sub .cooldown-ring circle{opacity:1;stroke:var(--danger);}
-html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--muted);}
 
 /* add drink form */
 .add-drink-form{background:var(--surface);border:1px dashed var(--border);border-radius:16px;
@@ -211,7 +201,6 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .stat-box{background:var(--surface2);border-radius:12px;padding:12px 14px;border:1px solid var(--border);}
 .stat-label{font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
 .stat-value{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);}
-.stat-value.hi{color:var(--accent);font-size:1.7rem;}
 .stat-value.accent{color:var(--accent);}
 .total-line{border-top:1px solid var(--border);padding-top:15px;display:flex;justify-content:space-between;align-items:center;}
 .total-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
@@ -266,7 +255,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 .close-row-val{color:var(--text);}
 .close-row-val.gold{color:var(--accent);}
 .close-row-val.green{color:var(--success);font-weight:500;}
-.card,.drink-card,.history-item,.add-drink-form,.settings-pill{box-shadow:0 2px 12px rgba(120,90,40,.06);}
+.card,.drink-card,.history-item,.add-drink-form{box-shadow:0 2px 12px rgba(120,90,40,.06);}
 .chips{display:flex;flex-wrap:wrap;gap:8px;}
 .chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;
   font-size:.7rem;color:var(--text);cursor:pointer;font-family:inherit;transition:all .15s;}
@@ -350,7 +339,7 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 <div style="height:28px"></div>
 
 <!-- VENUE PICKER -->
-<div id="venueModal">
+<div id="venueModal" onclick="if(event.target===this)closeVenuePicker()">
   <div id="venueSheet">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <div style="font-size:.85rem;font-weight:700;color:var(--text);">📍 Lokale in der Nähe</div>
@@ -487,9 +476,9 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 <!-- ════════════════════════════════ MODALS ════════════════════════════════ -->
 
 <!-- Settings modal -->
-<div class="modal-bg" id="modal-settings">
+<div class="modal-bg" id="modal-settings" onclick="if(event.target===this)closeModal('modal-settings')">
   <div class="modal">
-    <div class="modal-title">Einstellungen</div>
+    <div class="modal-title">Trinkgeld</div>
     <div class="field-label">Trinkgeld</div>
     <div class="chips" style="margin-bottom:10px;" id="tipChips">
       <button class="chip" onclick="setTipChip(0)">0 %</button>
@@ -503,10 +492,11 @@ html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--m
 </div>
 
 <!-- Close Evening modal -->
-<div class="modal-bg" id="modal-close">
+<div class="modal-bg" id="modal-close" onclick="if(event.target===this)closeModal('modal-close')">
   <div class="modal">
     <div class="modal-title">Abend abschließen</div>
     <div class="close-summary" id="closeSummary"></div>
+    <div id="gpsNote" style="display:none;font-size:.7rem;color:var(--muted);margin:0 0 8px;">📡 Standort nicht verfügbar, Ort bitte manuell wählen.</div>
     <div class="field-label">Ort / Bar</div>
     <div class="input-row">
       <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" oninput="updateLocChipsVisibility()" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
@@ -575,12 +565,6 @@ function syncTipChips() {
     c.classList.toggle('active', cv === val);
   });
 }
-function applyTipLive() {
-  tipPct = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
-  updatePill();
-  renderSummary();
-  save();
-}
 function totalGrand()    { return totalSubtotal() + totalTip(); }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
@@ -600,7 +584,6 @@ function closeDrawer(e) {
 }
 
 // ── Screen nav (kept for saveEvening redirect) ────────────────────────────────
-function showScreen() {} // no-op, single screen now
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function openModal(id) {
@@ -737,13 +720,14 @@ function addDrinkType() {
   const nameEl  = document.getElementById('new-name');
   const priceEl = document.getElementById('new-price');
   const name  = nameEl.value.trim();
-  let price = parseFloat((priceEl.value || '0').replace(',', '.')) || 0;
+  const rawPrice = (priceEl.value || '').trim();
+  let price = parseFloat((rawPrice || '0').replace(',', '.')) || 0;
   if (price < 0) price = 0;
   if (!name) { nameEl.focus(); return; }
   // Doppelten Namen vermeiden: existiert das Getränk schon, nur Preis aktualisieren
   const existing = drinkTypes.find(d => d.name.toLowerCase() === name.toLowerCase());
   if (existing) {
-    if (price > 0) existing.price = price;
+    if (rawPrice !== '') existing.price = price;
     nameEl.value = '';
     priceEl.value = '';
     renderDrinkTypes();
@@ -758,7 +742,24 @@ function addDrinkType() {
   save();
 }
 
+function editPrice(id) {
+  const dt = drinkTypes.find(d => d.id === id);
+  if (!dt) return;
+  const raw = prompt(`Neuer Preis für „${dt.name}“ (in Euro):`, String(dt.price).replace('.', ','));
+  if (raw === null) return;
+  const v = parseFloat(raw.trim().replace(',', '.'));
+  if (isNaN(v) || v < 0) return;
+  dt.price = v;
+  renderDrinkTypes();
+  renderSummary();
+  save();
+}
+
 function removeDrinkType(id) {
+  const dt = drinkTypes.find(d => d.id === id);
+  if (!dt) return;
+  const hasData = dt.count > 0 || eventLog.some(e => e.typeId === id);
+  if (hasData && !confirm(`„${dt.name}“ wirklich entfernen?\nDie zugehörigen Einträge im Bestellverlauf werden mitgelöscht.`)) return;
   drinkTypes = drinkTypes.filter(d => d.id !== id);
   eventLog   = eventLog.filter(e => e.typeId !== id);
   renderDrinkTypes();
@@ -793,7 +794,7 @@ function addOne(id) {
   startRing(circ, COOLDOWN, () => {
     dt.cooldown = false;
     if (btn) { btn.disabled = false; btn.classList.remove('cooling'); }
-    renderDrinkTypes();
+    if (!drinkTypes.some(d => d.cooldown)) renderDrinkTypes();
   });
   if (dt.timer) clearTimeout(dt.timer);
   dt.timer = setTimeout(() => { dt.cooldown = false; if (btn) { btn.disabled = false; btn.classList.remove('cooling'); } }, COOLDOWN);
@@ -840,7 +841,7 @@ function renderDrinkTypes() {
         ${logoHtml(dt.name)}
         <div class="drink-card-info">
           <div class="drink-card-name">${esc(dt.name)}</div>
-          <div class="drink-card-price">${fmt(dt.price)} / Stück</div>
+          <div class="drink-card-price" style="cursor:pointer;" onclick="event.stopPropagation();editPrice(${dt.id})">${fmt(dt.price)} / Stück <span style="opacity:.45">✎</span></div>
         </div>
         <div class="drink-count" id="dc-count-${dt.id}">${dt.count}</div>
         <button class="drink-add-btn${dt.cooldown?' cooling':''}" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
@@ -849,7 +850,7 @@ function renderDrinkTypes() {
           </svg>
           <span style="position:relative;z-index:1">+</span>
         </button>
-        <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 0 0 6px;line-height:1;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+        <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:12px 4px 12px 12px;margin:-12px -4px -12px 0;line-height:1;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
       </div>
     </div>`).join('');
   initSwipe();
@@ -864,6 +865,7 @@ function renderSummary() {
 }
 
 // ── Event Log ─────────────────────────────────────────────────────────────────
+let _evtShowAll = false;
 function renderEventLog() {
   renderPace();
   const el       = document.getElementById('evtList');
@@ -873,16 +875,27 @@ function renderEventLog() {
   if (card)     card.style.display     = hasItems ? 'block' : 'none';
   if (btnClose) btnClose.style.display = hasItems ? 'block' : 'none';
   if (!hasItems) { el.innerHTML = ''; return; }
-  el.innerHTML = [...eventLog].reverse().map((e, i) => `
+  const LIMIT = 50;
+  const items = [...eventLog].reverse();
+  const shown = _evtShowAll ? items : items.slice(0, LIMIT);
+  let html = shown.map((e, i) => `
     <div class="evt-item">
       <div class="evt-dot"></div>
       <div class="evt-num">#${eventLog.length - i}</div>
       <div class="evt-name">${esc(e.typeName)}</div>
       <div class="evt-time">${timeStr(e.time)}</div>
     </div>`).join('');
+  if (!_evtShowAll && items.length > LIMIT) {
+    html += `<button style="width:100%;height:36px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;cursor:pointer;" onclick="_evtShowAll=true;renderEventLog()">Alle ${eventLog.length} anzeigen</button>`;
+  }
+  el.innerHTML = html;
 }
 
 // ── Close Evening ─────────────────────────────────────────────────────────────
+function showGpsNote(msg) {
+  const gn = document.getElementById('gpsNote');
+  if (gn) { gn.textContent = '📡 ' + msg; gn.style.display = 'block'; }
+}
 function openCloseEvening() {
   if (totalCount() === 0) { alert('Noch keine Getränke bestellt!'); return; }
   const el = document.getElementById('closeSummary');
@@ -894,6 +907,7 @@ function openCloseEvening() {
   <div class="close-row"><span class="close-row-label" style="color:var(--text);font-weight:500">Gesamt</span><span class="close-row-val green">${fmt(totalGrand())}</span></div>`;
   el.innerHTML = rows;
   document.getElementById('m-location').value = '';
+  const gn = document.getElementById('gpsNote'); if (gn) gn.style.display = 'none';
   _recentLocs = recentLocations();
   document.getElementById('locChips').innerHTML = _recentLocs.map((l, i) =>
     `<button class="chip" onclick="pickLocation(${i})">📍 ${esc(l)}</button>`).join('');
@@ -925,14 +939,8 @@ function saveEvening() {
 }
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
-function resetSession() {
-  if (totalCount() === 0 && eventLog.length === 0) return;
-  if (!confirm('Session zurücksetzen? Alle Zähler werden auf 0 gesetzt.\n(Deine Getränke bleiben als Favoriten erhalten.)')) return;
-  resetSessionData();
-  save();
-}
-
 function resetSessionData(keepTypes = true) {
+  _evtShowAll = false;
   drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); });
   if (keepTypes) {
     // Zähler zurücksetzen, Getränke als Favoriten behalten
@@ -1039,30 +1047,7 @@ function deleteHistory(id) {
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── Logo Globe Detection ──────────────────────────────────────────────────────
-function checkLogo_UNUSED(img, fallbackId) {
-  try {
-    const c = document.createElement('canvas');
-    c.width = c.height = 16;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, 16, 16);
-    const d = ctx.getImageData(0, 0, 16, 16).data;
-    const colors = new Set();
-    for (let i = 0; i < d.length; i += 4) {
-      if (d[i+3] > 10) colors.add(`${Math.round(d[i]/32)},${Math.round(d[i+1]/32)},${Math.round(d[i+2]/32)}`);
-    }
-    if (colors.size < 6) {
-      img.style.display = 'none';
-      document.getElementById(fallbackId).style.display = 'flex';
-    } else {
-      img.style.opacity = '1';
-    }
-  } catch(e) {
-    img.style.opacity = '1'; // CORS issue — just show it
-  }
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ── Settings Accordion ────────────────────────────────────────────────────────
@@ -1237,7 +1222,7 @@ function initSwipe() {
           addOne(dtId);
         } else {
           const dt = drinkTypes.find(d => d.id === dtId);
-          if (dt && dt.count > 0) {
+          if (dt && dt.count > 0 && !dt.cooldown) {
             haptic('medium');
             dt.count--;
             const last = eventLog.map((e,i) => ({e,i})).reverse().find(x => x.e.typeId === dtId);
@@ -1258,7 +1243,7 @@ function initSwipe() {
             startRing(circ, COOLDOWN, () => {
               dt.cooldown = false;
               if (btn) { btn.disabled = false; btn.classList.remove('cooling-sub'); }
-              renderDrinkTypes();
+              if (!drinkTypes.some(d => d.cooldown)) renderDrinkTypes();
             }, true);
             if (dt.timer) clearTimeout(dt.timer);
             dt.timer = setTimeout(() => {
@@ -1350,7 +1335,7 @@ function openCloseEveningWithGps() {
   document.getElementById('venueModal').classList.add('open');
   navigator.geolocation.getCurrentPosition(
     pos => fetchNearbyVenues(pos.coords.latitude, pos.coords.longitude),
-    ()  => { closeVenuePicker(); openCloseEvening(); },
+    ()  => { closeVenuePicker(); openCloseEvening(); showGpsNote('Standort nicht verfügbar, Ort bitte manuell wählen.'); },
     { timeout: 6000, maximumAge: 60000 }
   );
 }
@@ -1374,9 +1359,9 @@ out body 15;`;
       }))
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 8);
-    if (venues.length === 0) { closeVenuePicker(); openCloseEvening(); return; }
+    if (venues.length === 0) { closeVenuePicker(); openCloseEvening(); showGpsNote('Keine Lokale in der Nähe gefunden.'); return; }
     showVenuePicker(venues, lat, lon);
-  } catch(e) { closeVenuePicker(); openCloseEvening(); }
+  } catch(e) { closeVenuePicker(); openCloseEvening(); showGpsNote('Suche fehlgeschlagen, Ort bitte manuell wählen.'); }
 }
 function haversine(la1, lo1, la2, lo2) {
   const R = 6371000, r = Math.PI / 180;
@@ -1386,18 +1371,20 @@ function haversine(la1, lo1, la2, lo2) {
 }
 const VENUE_ICONS = { bar:'🍸', pub:'🍺', restaurant:'🍽', cafe:'☕', biergarten:'🌿', nightclub:'🎵' };
 let _leafletMap = null;
+let _venues = [];
 function showVenuePicker(venues, userLat, userLon) {
+  _venues = venues;
   // Liste aufbauen
   document.getElementById('venueList').innerHTML =
-    venues.map(v => `
-      <div class="venue-item" onclick="pickVenue('${esc(v.name).replace(/'/g,"\'")}')">
+    venues.map((v, vi) => `
+      <div class="venue-item" onclick="pickVenue(${vi})"\'")}')">
         <span style="font-size:1.4rem">${VENUE_ICONS[v.type] || '📍'}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(v.name)}</div>
           <div class="venue-dist">${v.dist} m entfernt · ${v.type}</div>
         </div>
       </div>`).join('') +
-    `<div class="venue-item" onclick="pickVenue('')" style="opacity:.6;">
+    `<div class="venue-item" onclick="pickVenue(-1)" style="opacity:.6;">
       <span style="font-size:1.4rem">✏️</span>
       <div style="font-size:.85rem;color:var(--muted);">Manuell eingeben</div>
     </div>`;
@@ -1428,7 +1415,7 @@ function showVenuePicker(venues, userLat, userLon) {
       // Lokale als Pins
       const accent = getComputedStyle(document.documentElement)
         .getPropertyValue('--accent').trim() || '#e0701f';
-      venues.forEach(v => {
+      venues.forEach((v, vi) => {
         if (!v.lat || !v.lon) return;
         const icon = L.divIcon({
           className: '',
@@ -1441,14 +1428,13 @@ function showVenuePicker(venues, userLat, userLon) {
           </div>`,
           iconSize: [28, 28], iconAnchor: [14, 28]
         });
-        const safeName = v.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
         L.marker([v.lat, v.lon], { icon })
           .addTo(_leafletMap)
           .bindPopup(`
             <div class="venue-popup">
               <b>${esc(v.name)}</b>
               <small>${v.dist} m entfernt · ${v.type}</small>
-              <button class="venue-popup-btn" onclick="pickVenue('${safeName}')">
+              <button class="venue-popup-btn" onclick="pickVenue(${vi})">
                 ✓ &nbsp;Übernehmen
               </button>
             </div>`, { maxWidth: 200, closeButton: false });
@@ -1462,7 +1448,8 @@ function showVenuePicker(venues, userLat, userLon) {
     }, 80);
   }
 }
-function pickVenue(name) {
+function pickVenue(i) {
+  const name = (i >= 0 && _venues[i]) ? _venues[i].name : '';
   closeVenuePicker();
   openCloseEvening();
   if (name) setTimeout(() => { document.getElementById('m-location').value = name; updateLocChipsVisibility(); }, 50);

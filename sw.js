@@ -1,14 +1,28 @@
-const CACHE = 'drinks-v51';
-const FILES = [
+const CACHE = 'drinks-v52';
+const CORE = [
   './',
   './index.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap'
 ];
+// Logos und Icons: werden beim Installieren vorgeladen, ein einzelner Fehlschlag
+// blockiert die Installation aber nicht (allSettled statt addAll).
+const ASSETS = [
+  './icon-192.png', './icon-512.png',
+  './logos/aperol.png', './logos/budweiser.png', './logos/egger.png', './logos/espresso_martini.png',
+  './logos/gin_tonic.png', './logos/goesser.png', './logos/heineken.png', './logos/hirter.png',
+  './logos/hugo.png', './logos/kaiser.png', './logos/kozel.png', './logos/mojito.png',
+  './logos/murauer.png', './logos/ottakringer.png', './logos/pilsner.png', './logos/puntigamer.png',
+  './logos/rotwein.png', './logos/schnaitl.png', './logos/schremser.png', './logos/starobrno.png',
+  './logos/stiegl.png', './logos/trumer.png', './logos/villacher.png', './logos/weisser_spritzer.png',
+  './logos/weisswein.png', './logos/wieselburger.png', './logos/zipfer.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(c =>
+      c.addAll(CORE).then(() => Promise.allSettled(ASSETS.map(u => c.add(u))))
+    ).then(() => self.skipWaiting())
   );
 });
 
