@@ -1,4 +1,4 @@
-const CACHE = 'drinks-v52';
+const CACHE = 'drinks-v53';
 const CORE = [
   './',
   './index.html',
@@ -14,8 +14,8 @@ const ASSETS = [
   './logos/hugo.png', './logos/kaiser.png', './logos/kozel.png', './logos/mojito.png',
   './logos/murauer.png', './logos/ottakringer.png', './logos/pilsner.png', './logos/puntigamer.png',
   './logos/rotwein.png', './logos/schnaitl.png', './logos/schremser.png', './logos/starobrno.png',
-  './logos/stiegl.png', './logos/trumer.png', './logos/villacher.png', './logos/weisser_spritzer.png',
-  './logos/weisswein.png', './logos/wieselburger.png', './logos/zipfer.png'
+  './logos/stiegl.png', './logos/tegernseer.png', './logos/trumer.png', './logos/villacher.png',
+  './logos/weisser_spritzer.png', './logos/weisswein.png', './logos/wieselburger.png', './logos/zipfer.png'
 ];
 
 self.addEventListener('install', e => {
