@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*{-webkit-tap-highlight-color:transparent;}
 :root{
   --bg:#faf6f0;--surface:#ffffff;--surface2:#f5efe6;--border:#e8e0d2;
   --accent:#e0701f;--text:#33291f;--muted:#8a8274;
@@ -61,13 +62,16 @@ h1{
   gap:5px;cursor:pointer;transition:border-color .2s;flex-shrink:0;
 }
 .burger-btn:hover{border-color:var(--accent);}
+.burger-btn:active{transform:scale(.92);}
 .burger-line{width:18px;height:2px;background:var(--text);border-radius:2px;}
 
 /* drawer */
 .drawer-bg{
-  display:none;position:fixed;inset:0;background:rgba(70,52,30,.35);z-index:300;
+  position:fixed;inset:0;background:rgba(70,52,30,.35);z-index:300;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .3s ease, visibility .3s;
 }
-.drawer-bg.open{display:block;}
+.drawer-bg.open{opacity:1;visibility:visible;pointer-events:auto;}
 .drawer{
   position:fixed;top:0;right:0;bottom:0;width:min(320px,90vw);
   background:var(--surface);border-left:1px solid var(--border);
@@ -88,6 +92,7 @@ h1{
   display:flex;align-items:center;justify-content:center;transition:all .15s;
 }
 .drawer-close:hover{border-color:var(--muted);color:var(--text);}
+.drawer-close:active{transform:scale(.9);}
 .drawer-body{padding:20px 18px;flex:1;}
 
 /* screens */
@@ -117,6 +122,7 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .btn-primary:disabled{background:#ece5d8;color:var(--muted);cursor:not-allowed;filter:none;}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
 .btn-ghost:hover{border-color:var(--muted);color:var(--text);}
+.btn-ghost:active,.btn-danger:active{transform:scale(.97);}
 .btn-danger{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
 .btn-danger:hover{border-color:var(--danger);color:var(--danger);}
 
@@ -144,7 +150,7 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   position:relative;overflow:hidden;
   transition:transform .3s cubic-bezier(.34,1.3,.64,1);
   user-select:none;-webkit-user-select:none;
-  touch-action:none;
+  touch-action:pan-y;
 }
 .drink-card.dragging{transition:none;}
 .drink-card-info{flex:1;min-width:0;}
@@ -208,7 +214,8 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 
 /* timeline list */
 .evt-list{display:flex;flex-direction:column;}
-.evt-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);animation:slideIn .22s ease;}
+.evt-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.evt-item.evt-new{animation:slideIn .22s ease;}
 .evt-item:last-child{border-bottom:none;}
 @keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 .evt-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent);flex-shrink:0;}
@@ -217,10 +224,31 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .evt-time{font-size:.72rem;color:var(--muted);flex-shrink:0;}
 .evt-empty{font-size:.68rem;color:var(--muted);text-align:center;padding:14px 0;letter-spacing:.1em;}
 
+/* neue Karte gleitet herein */
+@keyframes card-enter{from{opacity:0;transform:translateY(-10px) scale(.98);}to{opacity:1;transform:none;}}
+.card-enter{animation:card-enter .32s cubic-bezier(.32,.72,0,1);}
+
+/* Werte zucken kurz wenn sie sich aendern */
+@keyframes val-bump{0%{transform:scale(1);}40%{transform:scale(1.14);}100%{transform:scale(1);}}
+.val-bump{animation:val-bump .3s cubic-bezier(.34,1.4,.64,1);transform-origin:left center;}
+
+/* Toast */
+#toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));
+  transform:translate(-50%,18px);background:var(--text);color:var(--bg);
+  padding:13px 24px;border-radius:26px;font-size:.8rem;font-weight:700;
+  z-index:600;opacity:0;visibility:hidden;pointer-events:none;
+  max-width:82vw;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.22);
+  transition:opacity .25s ease, transform .3s cubic-bezier(.32,.72,0,1), visibility .3s;}
+#toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);}
+
+/* weicher Wechsel beim Umschalten auf Dunkelmodus */
+html.theme-switching *{transition:background-color .35s ease, color .35s ease, border-color .35s ease !important;}
+
 /* history */
 .history-item{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:18px;width:100%;margin-bottom:12px;cursor:pointer;transition:border-color .2s;}
+  padding:18px;width:100%;margin-bottom:12px;cursor:pointer;transition:border-color .2s, transform .12s;}
 .history-item:hover{border-color:var(--accent);}
+.history-item:active{transform:scale(.985);}
 .history-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
 .history-date{font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);}
 .history-location{font-size:.78rem;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px;}
@@ -238,11 +266,22 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .back-btn:hover{color:var(--text);}
 
 /* modal */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(70,52,30,.4);z-index:200;
-  align-items:flex-end;justify-content:center;padding:0;}
-.modal-bg.open{display:flex;}
+.modal-bg{display:flex;position:fixed;inset:0;background:rgba(70,52,30,.4);z-index:200;
+  align-items:flex-end;justify-content:center;padding:0;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .25s ease, visibility .25s;}
+.modal-bg.open{opacity:1;visibility:visible;pointer-events:auto;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;
-  padding:28px 24px 40px;width:100%;max-width:500px;}
+  padding:28px 24px 40px;width:100%;max-width:500px;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);}
+.modal-bg.open .modal{transform:translateY(0);}
+
+/* Preisdialog sitzt oben, damit ihn die Tastatur nicht verdeckt */
+#modal-price{align-items:flex-start;padding:0 16px;}
+#modal-price .modal{margin-top:max(14vh, calc(env(safe-area-inset-top) + 56px));
+  border-radius:20px;max-width:380px;padding:24px 22px 26px;
+  transform:translateY(-26px) scale(.97);}
+#modal-price.open .modal{transform:none;}
 .modal-title{font-family:'Nunito',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:20px;}
 .modal-actions{display:flex;gap:10px;margin-top:6px;}
 .btn-modal-save{flex:1;height:48px;border-radius:12px;}
@@ -260,6 +299,7 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
 .chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;
   font-size:.7rem;color:var(--text);cursor:pointer;font-family:inherit;transition:all .15s;}
 .chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip:active{transform:scale(.95);}
 .chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
 #paceLine{display:none;margin-top:12px;font-size:.68rem;color:var(--muted);text-align:center;}
 
@@ -299,14 +339,26 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   0%  {r:8px;opacity:.7;}
   100%{r:54px;opacity:0;}
 }
-#venueModal{display:none;position:fixed;inset:0;z-index:500;background:rgba(70,52,30,.45);align-items:flex-end;}
-#venueModal.open{display:flex;}
-#venueSheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px 20px 36px;max-height:82vh;overflow-y:auto;}
+#venueModal{display:flex;position:fixed;inset:0;z-index:500;background:rgba(70,52,30,.45);align-items:flex-end;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .25s ease, visibility .25s;}
+#venueModal.open{opacity:1;visibility:visible;pointer-events:auto;}
+#venueSheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px 20px 36px;max-height:82vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);}
+#venueModal.open #venueSheet{transform:translateY(0);}
 #venueMap{width:100%;height:220px;border-radius:14px;overflow:hidden;margin-bottom:16px;display:none;}
 .venue-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
 .venue-item:last-child{border-bottom:none;}
 .venue-item:active{opacity:.7;}
 .venue-dist{font-size:.65rem;color:var(--muted);margin-top:2px;}
+
+@media (prefers-reduced-motion: reduce){
+  .modal,#venueSheet,.drawer{transition-duration:.01ms;}
+  .card-enter,.val-bump,.evt-item.evt-new,.drink-card-hint-add.snapped,
+  .drink-card-hint-sub.snapped{animation:none;}
+  .drink-count.bump{transform:none;}
+  html.theme-switching *{transition:none !important;}
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
@@ -509,6 +561,39 @@ input::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 </div>
 
+<!-- PREIS AENDERN -->
+<div class="modal-bg" id="modal-price" onclick="if(event.target===this)closeModal('modal-price')">
+  <div class="modal">
+    <div class="modal-title">Preis ändern</div>
+    <div class="field-label" id="priceDrinkName">Getränk</div>
+    <div class="input-row price-field" style="margin-bottom:20px;">
+      <input type="text" inputmode="decimal" id="m-price" placeholder="0,00"
+             onkeydown="if(event.key===&quot;Enter&quot;){event.preventDefault();savePrice();}"
+             style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:1.05rem;width:100%;padding:9px 0;">
+      <span class="input-suffix">€</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-price')">Abbrechen</button>
+      <button class="btn btn-primary btn-modal-save" onclick="savePrice()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- RUECKFRAGE -->
+<div class="modal-bg" id="modal-confirm" onclick="if(event.target===this)closeModal('modal-confirm')">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle"></div>
+    <div id="confirmText" style="font-size:.82rem;color:var(--muted);line-height:1.55;margin-bottom:24px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-confirm')">Abbrechen</button>
+      <button class="btn btn-primary btn-modal-save" id="confirmOk" onclick="runConfirm()">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
 <script>
 // ── State ──────────────────────────────────────────────────────────────────────
 let tipPct = 10;
@@ -518,6 +603,33 @@ let history   = []; // saved evenings
 
 const COOLDOWN = 2000;
 const LS_KEY   = 'drinks_app_v1';
+
+// ── Bewegung, Toast, Rückfrage ────────────────────────────────────────────────
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let _toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+let _confirmCb = null;
+function askConfirm(title, text, okLabel, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent  = text;
+  document.getElementById('confirmOk').textContent    = okLabel;
+  _confirmCb = cb;
+  openModal('modal-confirm');
+}
+function runConfirm() {
+  closeModal('modal-confirm');
+  const cb = _confirmCb; _confirmCb = null;
+  if (cb) cb();
+}
 
 // ── Persistence ───────────────────────────────────────────────────────────────
 function save() {
@@ -743,30 +855,50 @@ function addDrinkType() {
   save();
 }
 
+let _priceEditId = null;
 function editPrice(id) {
   const dt = drinkTypes.find(d => d.id === id);
   if (!dt) return;
-  const raw = prompt(`Neuer Preis für „${dt.name}“ (in Euro):`, String(dt.price).replace('.', ','));
-  if (raw === null) return;
-  const v = parseFloat(raw.trim().replace(',', '.'));
-  if (isNaN(v) || v < 0) return;
+  _priceEditId = id;
+  document.getElementById('priceDrinkName').textContent = dt.name;
+  const inp = document.getElementById('m-price');
+  inp.value = dt.price ? String(dt.price).replace('.', ',') : '';
+  openModal('modal-price');
+  inp.focus();
+  inp.select();
+}
+function savePrice() {
+  const dt = drinkTypes.find(d => d.id === _priceEditId);
+  if (!dt) { closeModal('modal-price'); return; }
+  const raw = document.getElementById('m-price').value.trim();
+  const v = parseFloat(raw.replace(',', '.'));
+  if (isNaN(v) || v < 0) { document.getElementById('m-price').focus(); return; }
   dt.price = v;
+  closeModal('modal-price');
+  _priceEditId = null;
   renderDrinkTypes();
   renderSummary();
   save();
+  toast('Preis aktualisiert');
 }
 
 function removeDrinkType(id) {
   const dt = drinkTypes.find(d => d.id === id);
   if (!dt) return;
+  const doRemove = () => {
+    if (dt.timer) clearTimeout(dt.timer);
+    drinkTypes = drinkTypes.filter(d => d.id !== id);
+    eventLog   = eventLog.filter(e => e.typeId !== id);
+    renderDrinkTypes();
+    renderSummary();
+    renderEventLog();
+    save();
+  };
   const hasData = dt.count > 0 || eventLog.some(e => e.typeId === id);
-  if (hasData && !confirm(`„${dt.name}“ wirklich entfernen?\nDie zugehörigen Einträge im Bestellverlauf werden mitgelöscht.`)) return;
-  drinkTypes = drinkTypes.filter(d => d.id !== id);
-  eventLog   = eventLog.filter(e => e.typeId !== id);
-  renderDrinkTypes();
-  renderSummary();
-  renderEventLog();
-  save();
+  if (!hasData) { doRemove(); return; }
+  askConfirm(`„${dt.name}“ entfernen?`,
+    'Die zugehörigen Einträge im Bestellverlauf werden mitgelöscht.',
+    'Entfernen', doRemove);
 }
 
 function addOne(id) {
@@ -829,6 +961,13 @@ function startRing(circ, duration, onDone, reverse) {
 
 function renderDrinkTypes() {
   const wrap = document.getElementById('drinkTypes');
+  const anim = !reduceMotion();
+  // Positionen vor dem Neuaufbau merken, damit die Karten danach an ihre
+  // neue Stelle gleiten statt hart zu springen.
+  const before = {};
+  if (anim) wrap.querySelectorAll('.drink-card-wrap').forEach(el => {
+    before[el.id] = el.getBoundingClientRect().top;
+  });
   if (drinkTypes.length === 0) {
     wrap.innerHTML = '';
     return;
@@ -855,18 +994,41 @@ function renderDrinkTypes() {
       </div>
     </div>`).join('');
   initSwipe();
+  if (!anim) return;
+  wrap.querySelectorAll('.drink-card-wrap').forEach(el => {
+    const old = before[el.id];
+    if (old === undefined) { el.classList.add('card-enter'); return; }   // neue Karte
+    const dy = old - el.getBoundingClientRect().top;
+    if (!dy) return;
+    el.style.transition = 'none';
+    el.style.transform  = 'translateY(' + dy + 'px)';
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .4s cubic-bezier(.32,.72,0,1)';
+      el.style.transform  = '';
+    });
+  });
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
+function setStat(id, val) {
+  const el = document.getElementById(id);
+  if (!el || el.textContent === val) return;
+  el.textContent = val;
+  if (reduceMotion()) return;
+  el.classList.remove('val-bump');
+  void el.offsetWidth;
+  el.classList.add('val-bump');
+}
 function renderSummary() {
-  document.getElementById('sumCount').textContent    = totalCount();
-  document.getElementById('sumSubtotal').textContent = fmt(totalSubtotal());
-  document.getElementById('sumTip').textContent      = fmt(totalTip());
-  document.getElementById('sumTotal').textContent    = fmt(totalGrand());
+  setStat('sumCount',    String(totalCount()));
+  setStat('sumSubtotal', fmt(totalSubtotal()));
+  setStat('sumTip',      fmt(totalTip()));
+  setStat('sumTotal',    fmt(totalGrand()));
 }
 
 // ── Event Log ─────────────────────────────────────────────────────────────────
 let _evtShowAll = false;
+let _evtLastLen = 0;
 function renderEventLog() {
   renderPace();
   const el       = document.getElementById('evtList');
@@ -877,10 +1039,12 @@ function renderEventLog() {
   if (btnClose) btnClose.style.display = hasItems ? 'block' : 'none';
   if (!hasItems) { el.innerHTML = ''; return; }
   const LIMIT = 50;
+  const isNew = eventLog.length > _evtLastLen;
+  _evtLastLen = eventLog.length;
   const items = [...eventLog].reverse();
   const shown = _evtShowAll ? items : items.slice(0, LIMIT);
   let html = shown.map((e, i) => `
-    <div class="evt-item">
+    <div class="evt-item${isNew && i === 0 ? ' evt-new' : ''}">
       <div class="evt-dot"></div>
       <div class="evt-num">#${eventLog.length - i}</div>
       <div class="evt-name">${esc(e.typeName)}</div>
@@ -898,7 +1062,7 @@ function showGpsNote(msg) {
   if (gn) { gn.textContent = '📡 ' + msg; gn.style.display = 'block'; }
 }
 function openCloseEvening() {
-  if (totalCount() === 0) { alert('Noch keine Getränke bestellt!'); return; }
+  if (totalCount() === 0) { toast('Noch keine Getränke bestellt'); return; }
   const el = document.getElementById('closeSummary');
   let rows = drinkTypes.filter(d => d.count > 0).map(d =>
     `<div class="close-row"><span class="close-row-label">${esc(d.name)}</span><span class="close-row-val gold">${d.count}× ${fmt(d.price)}</span></div>`).join('');
@@ -937,11 +1101,14 @@ function saveEvening() {
   // Daten im Hintergrund aktuell halten, ohne das Menü automatisch zu öffnen
   renderPresetList();
   renderHistory();
+  haptic('success');
+  toast(`Abend gespeichert · ${fmt(session.total)}`);
 }
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
 function resetSessionData(keepTypes = true) {
   _evtShowAll = false;
+  _evtLastLen = 0;
   drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); });
   if (keepTypes) {
     // Zähler zurücksetzen, Getränke als Favoriten behalten
@@ -1040,10 +1207,12 @@ function showHistoryDetail(id) {
 }
 
 function deleteHistory(id) {
-  if (!confirm('Diesen Abend wirklich löschen?')) return;
-  history = history.filter(h => h.id !== id);
-  save();
-  renderHistory();
+  askConfirm('Abend löschen?', 'Dieser gespeicherte Abend wird dauerhaft entfernt.', 'Löschen', () => {
+    history = history.filter(h => h.id !== id);
+    save();
+    renderHistory();
+    toast('Abend gelöscht');
+  });
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
@@ -1123,6 +1292,10 @@ function refreshOpenAccordions() {
 // ── Dark Mode ────────────────────────────────────────────────────────────────
 function saveDarkMode(on) {
   localStorage.setItem('drinks_dark', on ? '1' : '0');
+  if (!reduceMotion()) {
+    document.documentElement.classList.add('theme-switching');
+    setTimeout(() => document.documentElement.classList.remove('theme-switching'), 420);
+  }
   applyDarkMode(on);
 }
 function applyDarkMode(on) {
@@ -1286,7 +1459,7 @@ function saveGpsSetting(val) {
   gpsEnabled = val;
   localStorage.setItem('drinks_gps', val ? '1' : '0');
   if (val && !('geolocation' in navigator)) {
-    alert('GPS ist auf diesem Gerät nicht verfügbar.');
+    toast('GPS ist auf diesem Gerät nicht verfügbar');
     document.getElementById('gpsToggle').checked = false;
     gpsEnabled = false;
     localStorage.setItem('drinks_gps', '0');
@@ -1619,10 +1792,13 @@ function removePresetDrink(i) {
 function deletePreset() {
   const p = locationPresets.find(x => x.id === _editPresetId);
   if (!p) return;
-  if (!confirm(`Ort "${p.name}" wirklich löschen?`)) return;
-  locationPresets = locationPresets.filter(x => x.id !== _editPresetId);
-  save();
-  closePresetEditor();
+  const pid = _editPresetId;
+  askConfirm(`„${p.name}“ löschen?`, 'Die gespeicherten Preise für diesen Ort gehen verloren.', 'Löschen', () => {
+    locationPresets = locationPresets.filter(x => x.id !== pid);
+    save();
+    closePresetEditor();
+    toast('Ort gelöscht');
+  });
 }
 
 // ── Export / Import ───────────────────────────────────────────────────────────
@@ -1652,16 +1828,17 @@ function importData(input) {
     try {
       const d = JSON.parse(r.result);
       if (!d || !Array.isArray(d.history)) throw new Error('invalid');
-      if (!confirm('Backup importieren? Aktuelle Daten werden ersetzt.')) { input.value = ''; return; }
-      tipPct     = d.tipPct ?? 10;
-      drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
-      eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
-      history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), events: (h.events || []).map(e => ({ ...e, time: new Date(e.time) })) }));
-      if (d.locationPresets == null) { locationPresets = []; migratePresets(); }
-      else locationPresets = d.locationPresets;
-      save(); updatePill(); renderDrinkTypes(); renderSummary(); renderEventLog(); renderPresetList(); renderHistory();
-      alert('Backup importiert ✓');
-    } catch (e) { alert('Datei konnte nicht gelesen werden.'); }
+      askConfirm('Backup importieren?', 'Alle aktuellen Daten in der App werden dadurch ersetzt.', 'Importieren', () => {
+        tipPct     = d.tipPct ?? 10;
+        drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
+        eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
+        history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), events: (h.events || []).map(e => ({ ...e, time: new Date(e.time) })) }));
+        if (d.locationPresets == null) { locationPresets = []; migratePresets(); }
+        else locationPresets = d.locationPresets;
+        save(); updatePill(); renderDrinkTypes(); renderSummary(); renderEventLog(); renderPresetList(); renderHistory();
+        toast('Backup importiert');
+      });
+    } catch (e) { toast('Datei konnte nicht gelesen werden'); }
     input.value = '';
   };
   r.readAsText(f);
