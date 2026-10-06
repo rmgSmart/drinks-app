@@ -1,4 +1,4 @@
-const CACHE = 'drinks-v56';
+const CACHE = 'drinks-v57';
 // Wie lange beim Start auf das Netz gewartet wird, bevor die gecachte Version kommt
 const NAV_TIMEOUT = 2500;
 const CORE = [
