@@ -18,8 +18,8 @@
   try {
     var p = localStorage.getItem('drinks_theme');
     if (!p) { var o = localStorage.getItem('drinks_dark'); p = o === '1' ? 'dark' : (o === '0' ? 'light' : 'auto'); }
-    var d = p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light');
+    var t = p === 'green' ? 'green' : (p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
     if (!('switch' in document.createElement('input'))) document.documentElement.classList.add('no-switch');
   } catch (e) {}
 })();
@@ -45,6 +45,9 @@ html[data-theme="light"]{
   --seg-bg:rgba(118,118,128,.12);--seg-thumb:#FFFFFF;
   --alert-bg:rgba(248,248,248,.97);--menu-bg:rgba(246,246,246,.9);
   --shadow:0 8px 30px rgba(0,0,0,.12);
+  --on-tint:#FFFFFF;--cell-brd:transparent;--btn-shadow:0 4px 12px rgba(199,80,0,.25);
+  --hero-base:#C75000;--hero:linear-gradient(150deg,#C75000 0%,#B04600 65%,#9E3F00 100%);--hero-brd:transparent;
+  --hero-label:#FFFFFF;--hero-amount:#FFFFFF;--hero-chip:rgba(0,0,0,.16);
 }
 html[data-theme="dark"]{
   color-scheme:dark;
@@ -58,7 +61,32 @@ html[data-theme="dark"]{
   --seg-bg:rgba(118,118,128,.24);--seg-thumb:#636366;
   --alert-bg:rgba(44,44,46,.97);--menu-bg:rgba(44,44,46,.92);
   --shadow:0 8px 30px rgba(0,0,0,.55);
+  --on-tint:#FFFFFF;--cell-brd:transparent;--btn-shadow:none;
+  --hero-base:#C75000;--hero:linear-gradient(150deg,#C75000 0%,#B04600 65%,#9E3F00 100%);--hero-brd:transparent;
+  --hero-label:#FFFFFF;--hero-amount:#FFFFFF;--hero-chip:rgba(0,0,0,.18);
 }
+/* Grün mit Gold, angelehnt an AZAZ */
+html[data-theme="green"]{
+  color-scheme:dark;
+  --bg:#0B211A;--cell:#193A30;--sheet-bg:#12302A;--sheet-cell:#1C4135;
+  --label:#F4F7F1;--label2:#B7C6BC;--label3:#8FA396;
+  --sep:rgba(255,255,255,.11);--fill:rgba(255,255,255,.1);--press:#24493D;--sheet-press:#275043;
+  --tint:#E3C077;--tint-fill:#C9A24B;--on-tint:#2A2005;
+  --green:#8ED9A0;--green-fill:#2E8A55;
+  --red:#F2A18C;--red-fill:#B9634E;
+  --glass:rgba(18,48,40,.8);--glass-border:rgba(255,255,255,.16);
+  --seg-bg:rgba(255,255,255,.08);--seg-thumb:rgba(255,255,255,.2);
+  --alert-bg:rgba(24,58,48,.97);--menu-bg:rgba(24,58,48,.95);
+  --shadow:0 10px 30px rgba(0,0,0,.42);
+  --cell-brd:rgba(255,255,255,.1);--btn-shadow:0 4px 14px rgba(201,162,75,.3);
+  --hero-base:#22503F;--hero:linear-gradient(150deg,#22503F 0%,#14342B 62%,#1F4A3B 100%);--hero-brd:rgba(201,162,75,.3);
+  --hero-label:#B7C6BC;--hero-amount:#E3C077;--hero-chip:rgba(0,0,0,.2);
+}
+html[data-theme="green"] #page{
+  background:radial-gradient(120% 70% at 10% 0%,#1E4C3C 0%,transparent 55%),
+             radial-gradient(130% 90% at 95% 15%,#0B2019 0%,transparent 60%),
+             linear-gradient(165deg,#17392F 0%,#102B22 55%,#0B211A 100%);
+  background-size:100% 100lvh;background-repeat:no-repeat;background-color:#0B211A}
 
 /* ════════════════ Basis ════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -98,8 +126,27 @@ input{-webkit-user-select:text;user-select:text}
 .date-cap{font-size:13px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.02em}
 .large-title{font-family:var(--round);font-size:34px;line-height:41px;font-weight:700;letter-spacing:.01em}
 
+/* ════════════════ Übersichtskarte ════════════════ */
+.hero{position:relative;border-radius:24px;padding:18px 20px 16px;margin-bottom:24px;color:#fff;
+  background-color:var(--hero-base);background-image:var(--hero);border:.5px solid var(--hero-brd);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.hero-lbl{font-size:13px;font-weight:600;color:var(--hero-label)}
+.hero-amt{font-family:var(--round);font-size:44px;font-weight:700;line-height:1.12;letter-spacing:-.5px;color:var(--hero-amount);margin-top:2px;white-space:nowrap;overflow:hidden}
+.hero-sub{font-size:15px;color:var(--hero-label);margin-top:4px}
+.hero-chips{display:flex;gap:8px;margin-top:14px}
+.hero-chip{flex:1;min-width:0;background:var(--hero-chip);border-radius:14px;padding:9px 12px}
+.hero-chip small{display:block;font-size:13px;font-weight:600;color:var(--hero-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero-chip span{display:block;font-family:var(--round);font-size:20px;font-weight:700;color:#fff;white-space:nowrap;font-variant-numeric:tabular-nums}
+.drinks-head{margin-top:0!important}
+@media (max-width:380px){
+  .hero{padding:16px 14px 14px}
+  .hero-chips{gap:6px}
+  .hero-chip{padding:8px 7px}
+  .hero-chip span{font-size:18px}
+}
+
 /* ════════════════ Gruppierte Listen ════════════════ */
-.group{position:relative;background:var(--cell);border-radius:var(--radius);overflow:hidden}
+.group{position:relative;background:var(--cell);border-radius:var(--radius);overflow:hidden;border:.5px solid var(--cell-brd)}
+.content .group{border-radius:18px}
 .group.spaced{margin-top:22px}
 .group-header{font-size:20px;font-weight:700;margin:26px 4px 8px;line-height:1.25}
 .sheet .group-header{font-size:13px;font-weight:400;color:var(--label2);margin:24px 16px 7px;line-height:1.3}
@@ -132,51 +179,51 @@ input{-webkit-user-select:text;user-select:text}
 .row-line{display:flex;align-items:center;gap:12px}
 
 /* ════════════════ Getränkezeilen ════════════════ */
-.drow-wrap{position:relative;overflow:hidden;--inset:72px}
+.drow-wrap{position:relative;overflow:hidden;--inset:84px}
 .drow-wrap:has(.drow.dragging)::before{opacity:0}
 .swipe-bg{position:absolute;inset:0;display:flex;align-items:center;color:#fff;font-family:var(--round);font-size:20px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .12s}
 .swipe-bg.add{background:var(--green-fill);justify-content:flex-start;padding-left:22px}
 .swipe-bg.sub{background:var(--red-fill);justify-content:flex-end;padding-right:22px}
 .swipe-bg.snapped span{animation:snap-pop .3s var(--spring)}
 @keyframes snap-pop{0%{transform:scale(1)}45%{transform:scale(1.3)}100%{transform:scale(1)}}
-.drow{position:relative;display:flex;align-items:center;gap:12px;min-height:68px;padding:10px 12px 10px 16px;background:var(--cell);
+.drow{position:relative;display:flex;align-items:center;gap:14px;min-height:82px;padding:12px 12px 12px 14px;background:var(--cell);
   transition:transform .35s var(--ease),background-color .35s;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .drow.dragging{transition:none}
 .drow:has(.drow-info:active){background:var(--press);transition:none}
-.logo{width:44px;height:44px;border-radius:10px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--fill);font-size:25px;line-height:1}
+.logo{width:56px;height:56px;border-radius:14px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--fill);font-size:30px;line-height:1}
 .logo img{width:100%;height:100%;object-fit:cover;display:block}
-.logo.mono{color:#fff;font-family:var(--round);font-size:21px;font-weight:700}
+.logo.mono{color:#fff;font-family:var(--round);font-size:25px;font-weight:700}
 .drow-info{flex:1;min-width:0;cursor:pointer;padding:4px 0}
 .drow-name{font-size:17px;font-weight:600;line-height:1.22;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   -webkit-hyphens:auto;hyphens:auto;overflow-wrap:break-word}
 .drow-price{font-size:15px;color:var(--label2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-.drow-count{font-family:var(--round);font-size:26px;font-weight:700;min-width:30px;text-align:center;color:var(--tint);font-variant-numeric:tabular-nums;transition:color .2s}
+.drow-count{font-family:var(--round);font-size:28px;font-weight:700;min-width:30px;text-align:center;color:var(--tint);font-variant-numeric:tabular-nums;transition:color .2s}
 .drow-count.zero{color:var(--label2);font-weight:600}
 .drow-count.bump{animation:count-bump .32s var(--spring)}
 @keyframes count-bump{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
-.add-btn{position:relative;width:46px;height:46px;border-radius:50%;background:var(--tint-fill);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
+.add-btn{position:relative;width:48px;height:48px;border-radius:50%;background:var(--tint-fill);color:var(--on-tint);box-shadow:var(--btn-shadow);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
   transition:transform .15s,background-color .2s,color .2s;touch-action:manipulation}
 .add-btn .ic{width:24px;height:24px}
 .add-btn:active{transform:scale(.88)}
-.add-btn.disabled{background:var(--fill);color:var(--label3)}
+.add-btn.disabled{background:var(--fill);color:var(--label3);box-shadow:none}
 .add-btn.disabled:active{transform:none}
 /* Unsichtbarer nativer Schalter über dem Plus: ein echter Fingertipp darauf löst auf dem iPhone die Haptik aus */
 .hx{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;clip-path:inset(0 round 999px);cursor:pointer;z-index:2}
 .ring{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);transform:rotate(-90deg);pointer-events:none}
 .ring circle{fill:none;stroke:var(--green-fill);stroke-width:3;stroke-linecap:round;stroke-dasharray:0 999;opacity:0}
 .add-btn.cooling-sub .ring circle{stroke:var(--red-fill)}
-.add-row{--inset:72px;color:var(--tint)}
-.add-row .add-ic{width:44px;display:flex;justify-content:center;color:var(--tint-fill)}
-.add-row .add-ic .ic{width:28px;height:28px}
+.add-row{--inset:84px;color:var(--tint);min-height:58px;padding-left:14px;gap:14px;font-weight:500}
+.add-row .add-ic{width:56px;display:flex;justify-content:center}
+.add-row .add-ic span{width:34px;height:34px;border-radius:50%;background:var(--tint-fill);color:var(--on-tint);display:flex;align-items:center;justify-content:center}
+.add-row .add-ic .ic{width:18px;height:18px}
 @keyframes row-enter{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .row-enter{animation:row-enter .32s var(--ease)}
 @media (max-width:360px){
-  .bar{padding-left:16px;gap:10px}
-  .bar-btn{padding:0 18px}
-  .drow{gap:10px;padding:10px 10px 10px 14px}
-  .drow-wrap,.add-row{--inset:64px}
-  .logo{width:40px;height:40px}
-  .add-row .add-ic{width:40px}
+  .drow{gap:10px;padding:10px 10px 10px 12px;min-height:72px}
+  .drow-wrap,.add-row{--inset:70px}
+  .logo{width:48px;height:48px;border-radius:12px}
+  .add-row{padding-left:12px;gap:10px}
+  .add-row .add-ic{width:48px}
   .drow-count{min-width:26px;font-size:24px}
   .add-btn{width:44px;height:44px}
 }
@@ -192,19 +239,16 @@ input{-webkit-user-select:text;user-select:text}
 /* Zahlen bewegen sich kurz, wenn sie sich ändern */
 @keyframes val-bump{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
 .val-bump{animation:val-bump .3s var(--spring);transform-origin:right center}
-.bar-amount.val-bump{transform-origin:left center}
+.hero-amt.val-bump{transform-origin:left center}
 
 /* ════════════════ Schwebende Leiste unten ════════════════ */
 .bar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:60;max-width:600px;margin:0 auto;
-  display:flex;align-items:center;gap:12px;padding:8px 8px 8px 20px;border-radius:32px;
+  display:flex;align-items:center;gap:12px;padding:8px;border-radius:34px;
   background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:.5px solid var(--glass-border);box-shadow:var(--shadow);
   transform:translateY(calc(100% + 40px));opacity:0;visibility:hidden;transition:transform .45s var(--ease),opacity .3s,visibility .45s}
 .bar.show{transform:none;opacity:1;visibility:visible}
-.bar-total{flex:1;min-width:0}
-.bar-cap{font-size:13px;font-weight:600;color:var(--label2)}
-.bar-amount{font-family:var(--round);font-size:24px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden}
-.bar-btn{height:50px;padding:0 24px;border-radius:25px;background:var(--tint-fill);color:#fff;font-size:17px;font-weight:600;white-space:nowrap;transition:opacity .15s}
+.bar-btn{flex:1;height:52px;padding:0 24px;border-radius:26px;text-align:center;background:var(--tint-fill);color:var(--on-tint);font-size:17px;font-weight:600;white-space:nowrap;transition:opacity .15s}
 .bar-btn:active{opacity:.65}
 
 /* ════════════════ Segmented Control ════════════════ */
@@ -284,7 +328,7 @@ html.no-switch .ios-switch:checked::before{transform:translateX(20px)}
 @keyframes radar-ping{0%{r:8px;opacity:.7}100%{r:54px;opacity:0}}
 .venue-wait{text-align:center;color:var(--label2);font-size:15px;padding-bottom:20px}
 #venueMap{height:210px;border-radius:var(--radius);overflow:hidden;margin:6px 0 22px;display:none;background:var(--fill)}
-html[data-theme="dark"] #venueMap .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88)}
+html[data-theme="dark"] #venueMap .leaflet-tile-pane,html[data-theme="green"] #venueMap .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88)}
 #venueMap .leaflet-container{font-family:var(--font)}
 #venueMap .leaflet-popup-content-wrapper,#venueMap .leaflet-popup-tip{background:var(--cell);color:var(--label);box-shadow:var(--shadow)}
 #venueMap .leaflet-popup-content-wrapper{border-radius:12px}
@@ -292,7 +336,7 @@ html[data-theme="dark"] #venueMap .leaflet-tile-pane{filter:invert(1) hue-rotate
 .venue-popup{font-family:var(--font);min-width:150px}
 .venue-popup b{display:block;font-size:15px;font-weight:600;margin-bottom:2px}
 .venue-popup small{display:block;font-size:13px;color:var(--label2);margin-bottom:10px}
-.venue-popup-btn{display:block;width:100%;height:34px;border-radius:17px;background:var(--tint-fill);color:#fff;font-size:15px;font-weight:600;text-align:center}
+.venue-popup-btn{display:block;width:100%;height:34px;border-radius:17px;background:var(--tint-fill);color:var(--on-tint);font-size:15px;font-weight:600;text-align:center}
 
 /* ════════════════ Alert ════════════════ */
 .alert-wrap{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
@@ -312,7 +356,7 @@ html[data-theme="dark"] #venueMap .leaflet-tile-pane{filter:invert(1) hue-rotate
 
 /* ════════════════ Kontextmenü ════════════════ */
 .ctx{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
-html[data-theme="dark"] .ctx{background:rgba(0,0,0,.4)}
+html[data-theme="dark"] .ctx,html[data-theme="green"] .ctx{background:rgba(0,0,0,.4)}
 .ctx.open{opacity:1;visibility:visible}
 .ctx-preview{position:fixed;border-radius:14px;overflow:hidden;background:var(--cell);box-shadow:0 12px 40px rgba(0,0,0,.25);transition:transform .35s var(--spring);pointer-events:none}
 .ctx.open .ctx-preview{transform:scale(1.03)}
@@ -382,10 +426,22 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
       <h1 class="large-title" id="largeTitle">Drinks</h1>
     </div>
 
+    <section class="hero" id="hero" hidden>
+      <div class="hero-lbl">Heute Abend</div>
+      <div class="hero-amt num" id="heroTotal">€&nbsp;0,00</div>
+      <div class="hero-sub" id="heroSub"></div>
+      <div class="hero-chips" id="heroChips" hidden>
+        <div class="hero-chip"><small>Seit</small><span id="chipSince"></span></div>
+        <div class="hero-chip"><small>Letzter vor</small><span id="chipLast"></span></div>
+        <div class="hero-chip"><small>Im Schnitt</small><span id="chipAvg"></span></div>
+      </div>
+    </section>
+
+    <h2 class="group-header drinks-head">Getränke</h2>
     <div class="group" id="drinkGroup">
       <div id="drinkTypes"></div>
       <button class="row tappable add-row" onclick="openDrinkSheet()">
-        <span class="add-ic"><svg class="ic"><use href="#i-plus-circle"/></svg></span><span>Getränk hinzufügen</span>
+        <span class="add-ic"><span><svg class="ic"><use href="#i-plus"/></svg></span></span><span>Getränk hinzufügen</span>
       </button>
     </div>
     <div class="group-footer" id="drinkHint"></div>
@@ -399,7 +455,6 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
     <section id="sumSection" hidden>
       <h2 class="group-header">Abrechnung</h2>
       <div class="group">
-        <div class="row"><span class="row-label">Drinks</span><span class="row-value num" id="sumCount">0</span></div>
         <div class="row"><span class="row-label">Zwischensumme</span><span class="row-value num" id="sumSubtotal">€&nbsp;0,00</span></div>
         <div class="row row-tip">
           <div class="row-line"><span class="row-label" id="sumTipLabel">Trinkgeld</span><span class="row-value num" id="sumTip">€&nbsp;0,00</span></div>
@@ -407,7 +462,6 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
         </div>
         <div class="row row-total"><span class="row-label">Gesamt</span><span class="row-value num" id="sumTotal">€&nbsp;0,00</span></div>
       </div>
-      <div class="group-footer" id="paceLine"></div>
     </section>
 
     <section id="evtSection" hidden>
@@ -417,8 +471,7 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
   </main>
 
   <div class="bar" id="bottomBar" aria-hidden="true">
-    <div class="bar-total"><div class="bar-cap">Gesamt</div><div class="bar-amount num" id="barTotal">€&nbsp;0,00</div></div>
-    <button class="bar-btn" onclick="openCloseEveningFlow()">Abschließen</button>
+    <button class="bar-btn" onclick="openCloseEveningFlow()">Abend abschließen</button>
   </div>
 </div>
 
@@ -855,21 +908,22 @@ const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 function themePref() {
   let p = localStorage.getItem('drinks_theme');
   if (!p) { const o = localStorage.getItem('drinks_dark'); p = o === '1' ? 'dark' : o === '0' ? 'light' : 'auto'; }
-  return ['auto', 'light', 'dark'].includes(p) ? p : 'auto';
+  return ['auto', 'light', 'dark', 'green'].includes(p) ? p : 'auto';
 }
 function syncThemeColor() {
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.querySelector('meta[name="theme-color"]').content = (_frozen || dark) ? '#000000' : '#F2F2F7';
+  const t = document.documentElement.getAttribute('data-theme');
+  document.querySelector('meta[name="theme-color"]').content =
+    _frozen || t === 'dark' ? '#000000' : t === 'green' ? '#17392F' : '#F2F2F7';
 }
 function applyTheme(animate) {
   const p = themePref();
-  const dark = p === 'dark' || (p === 'auto' && darkQuery.matches);
+  const theme = p === 'green' ? 'green' : (p === 'dark' || (p === 'auto' && darkQuery.matches)) ? 'dark' : 'light';
   const html = document.documentElement;
-  if (animate && !reduceMotion() && html.getAttribute('data-theme') !== (dark ? 'dark' : 'light')) {
+  if (animate && !reduceMotion() && html.getAttribute('data-theme') !== theme) {
     html.classList.add('theme-switching');
     setTimeout(() => html.classList.remove('theme-switching'), 420);
   }
-  html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  html.setAttribute('data-theme', theme);
   syncThemeColor();
 }
 function setThemePref(p) {
@@ -1044,6 +1098,7 @@ function renderDrinkTypes() {
   else if (!locationPresets.length) hint.textContent = 'Füge dein erstes Getränk hinzu. Beim Abschließen merkt sich die App Ort und Preise.';
   else hint.textContent = '';
   $('sumSection').hidden = drinkTypes.length === 0;
+  $('hero').hidden = drinkTypes.length === 0;
   renderPresetQuick();
 }
 function setCount(dt) {
@@ -1069,14 +1124,17 @@ function fitText(el, max, min) {
   while (size > min && el.scrollWidth > el.clientWidth + 0.5) { size -= 1; el.style.fontSize = size + 'px'; }
 }
 function renderSummary() {
-  setStat('sumCount', String(totalCount()));
+  const n = totalCount();
   setStat('sumSubtotal', fmt(totalSubtotal()));
   setStat('sumTip', fmt(totalTip()));
   setStat('sumTotal', fmt(totalGrand()));
-  setStat('barTotal', fmt(totalGrand()));
-  fitText($('barTotal'), 24, 16);
+  setStat('heroTotal', fmt(totalGrand()));
+  fitText($('heroTotal'), 44, 26);
+  $('heroSub').textContent = n
+    ? `${n} Drink${n === 1 ? '' : 's'} · inkl. ${fmtPct(tipPct)} Trinkgeld`
+    : 'Noch nichts bestellt';
   $('sumTipLabel').textContent = `Trinkgeld (${fmtPct(tipPct)})`;
-  const show = totalCount() > 0;
+  const show = n > 0;
   const bar = $('bottomBar');
   bar.classList.toggle('show', show);
   bar.setAttribute('aria-hidden', show ? 'false' : 'true');
@@ -1101,22 +1159,29 @@ function renderEventLog() {
   }
   list.innerHTML = html;
 }
+// Kurze Dauer für die Kacheln der Übersichtskarte
+function shortDuration(mins) {
+  if (mins < 1) return '< 1 Min.';
+  if (mins < 60) return `${mins} Min.`;
+  if (mins < 1440) return `${Math.floor(mins / 60)} Std.`;
+  return `${Math.floor(mins / 1440)} Tg.`;
+}
 function renderPace() {
-  const el = $('paceLine');
-  if (!eventLog.length) { el.textContent = ''; return; }
-  const last = eventLog[eventLog.length - 1].time;
-  const mins = Math.floor((Date.now() - last.getTime()) / 60000);
-  let ago;
-  if (mins < 1) ago = 'gerade eben';
-  else if (mins < 60) ago = `vor ${mins} Min.`;
-  else if (mins < 1440) ago = `vor ${Math.floor(mins / 60)} Std.${mins % 60 ? ` ${mins % 60} Min.` : ''}`;
-  else { const d = Math.floor(mins / 1440); ago = `vor ${d} Tag${d === 1 ? '' : 'en'}`; }
-  let txt = `Letzter Drink ${ago}`;
-  if (eventLog.length >= 2) {
-    const avg = Math.round((last - eventLog[0].time) / 60000 / (eventLog.length - 1));
-    if (avg > 0) txt += ` · im Schnitt alle ${avg} Min.`;
-  }
-  el.textContent = txt;
+  const chips = $('heroChips');
+  if (!eventLog.length) { chips.hidden = true; return; }
+  chips.hidden = false;
+  const first = eventLog[0].time, last = eventLog[eventLog.length - 1].time;
+  $('chipSince').textContent = timeStr(first);
+  $('chipLast').textContent = shortDuration(Math.floor((Date.now() - last.getTime()) / 60000));
+  $('chipAvg').textContent = eventLog.length >= 2
+    ? shortDuration(Math.max(1, Math.round((last - first) / 60000 / (eventLog.length - 1))))
+    : '–';
+  fitChips();
+}
+// Werte in den Kacheln notfalls verkleinern, damit nichts abgeschnitten wird
+function fitChips() {
+  const base = window.innerWidth <= 380 ? 18 : 20;
+  ['chipSince', 'chipLast', 'chipAvg'].forEach(id => fitText($(id), base, 13));
 }
 setInterval(renderPace, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) renderPace(); });
@@ -1698,7 +1763,7 @@ function openSettings() {
   openSheet('sheet-settings', 'root');
 }
 function renderSettings() {
-  renderSeg($('themeSeg'), [{ v: 'auto', label: 'Automatisch' }, { v: 'light', label: 'Hell' }, { v: 'dark', label: 'Dunkel' }], themePref(), setThemePref);
+  renderSeg($('themeSeg'), [{ v: 'auto', label: 'Auto' }, { v: 'light', label: 'Hell' }, { v: 'dark', label: 'Dunkel' }, { v: 'green', label: 'Grün' }], themePref(), setThemePref);
   $('gpsToggle').checked = gpsEnabled;
   renderPresetList();
 }
@@ -1885,7 +1950,7 @@ window.addEventListener('scroll', () => {
   if (_scrollRaf) return;
   _scrollRaf = requestAnimationFrame(() => { _scrollRaf = 0; onScroll(); });
 }, { passive: true });
-window.addEventListener('resize', () => { fitText($('barTotal'), 24, 16); if (!_frozen) { updateTitleThreshold(); onScroll(); } });
+window.addEventListener('resize', () => { fitText($('heroTotal'), 44, 26); if (!$('heroChips').hidden) fitChips(); if (!_frozen) { updateTitleThreshold(); onScroll(); } });
 
 // ════════════════ Start ════════════════
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
