@@ -1,718 +1,885 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Drinks</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#faf6f0">
+<meta name="theme-color" content="#F2F2F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Drinks">
+<meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+// Erscheinungsbild vor dem ersten Zeichnen setzen, damit nichts hell aufblitzt
+(function () {
+  try {
+    var p = localStorage.getItem('drinks_theme');
+    if (!p) { var o = localStorage.getItem('drinks_dark'); p = o === '1' ? 'dark' : (o === '0' ? 'light' : 'auto'); }
+    var d = p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light');
+    if (!('switch' in document.createElement('input'))) document.documentElement.classList.add('no-switch');
+  } catch (e) {}
+})();
+</script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-*{-webkit-tap-highlight-color:transparent;}
+/* ════════════════ iOS Systemwerte ════════════════ */
 :root{
-  --bg:#faf6f0;--surface:#ffffff;--surface2:#f5efe6;--border:#e8e0d2;
-  --accent:#e0701f;--text:#33291f;--muted:#8a8274;
-  --danger:#d94f4f;--success:#1f9d63;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Helvetica Neue",Arial,sans-serif;
+  --round:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --ease:cubic-bezier(.32,.72,0,1);
+  --spring:cubic-bezier(.34,1.36,.64,1);
+  --radius:12px;
+}
+html[data-theme="light"]{
+  color-scheme:light;
+  --bg:#F2F2F7;--cell:#FFFFFF;--sheet-bg:#F2F2F7;--sheet-cell:#FFFFFF;
+  --label:#000000;--label2:#6C6C70;--label3:#AEAEB2;
+  --sep:rgba(60,60,67,.29);--fill:rgba(118,118,128,.12);--press:#D1D1D6;--sheet-press:#D1D1D6;
+  --tint:#A94800;--tint-fill:#C75000;
+  --green:#248A3D;--green-fill:#2DA44E;
+  --red:#D70015;--red-fill:#E5352B;
+  --glass:rgba(249,249,249,.82);--glass-border:rgba(0,0,0,.08);
+  --seg-bg:rgba(118,118,128,.12);--seg-thumb:#FFFFFF;
+  --alert-bg:rgba(248,248,248,.97);--menu-bg:rgba(246,246,246,.9);
+  --shadow:0 8px 30px rgba(0,0,0,.12);
 }
 html[data-theme="dark"]{
-  --bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;
-  --accent:#e8a050;--text:#f0eee8;--muted:#6e6e80;
-  --danger:#ff6b6b;--success:#6bcb8b;}
-html[data-theme="dark"] body{
-  background-image:radial-gradient(ellipse at 20% 10%,#1a1a2e 0%,transparent 60%),
-                   radial-gradient(ellipse at 80% 80%,#1c1410 0%,transparent 60%);}
-html[data-theme="dark"] .drink-add-btn:disabled{background:#252530;color:var(--muted);}
-html[data-theme="dark"] .toggle-slider:before{background:#ccc;}
-html {
-  height: 100%;
-  overflow: hidden;
-  font-size: 17px;
+  color-scheme:dark;
+  --bg:#000000;--cell:#1C1C1E;--sheet-bg:#1C1C1E;--sheet-cell:#2C2C2E;
+  --label:#FFFFFF;--label2:#AEAEB2;--label3:#636366;
+  --sep:rgba(84,84,88,.65);--fill:rgba(118,118,128,.24);--press:#2C2C2E;--sheet-press:#3A3A3C;
+  --tint:#FF9F0A;--tint-fill:#C75000;
+  --green:#30D158;--green-fill:#2DA44E;
+  --red:#FF6961;--red-fill:#FF453A;
+  --glass:rgba(30,30,32,.78);--glass-border:rgba(255,255,255,.1);
+  --seg-bg:rgba(118,118,128,.24);--seg-thumb:#636366;
+  --alert-bg:rgba(44,44,46,.97);--menu-bg:rgba(44,44,46,.92);
+  --shadow:0 8px 30px rgba(0,0,0,.55);
 }
-body{
-  background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;
-  min-height:100%;height:100%;overflow-y:auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
-  display:flex;flex-direction:column;align-items:center;
-  padding:max(36px, env(safe-area-inset-top)) 16px max(80px, env(safe-area-inset-bottom));
-  background-image:radial-gradient(ellipse at 20% 0%,#fdead6 0%,transparent 55%),
-                   radial-gradient(ellipse at 85% 95%,#e6f3ec 0%,transparent 55%);
+
+/* ════════════════ Basis ════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*{-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html{font-size:17px;background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+html.sheet-open,html.sheet-open body{background:#000}
+body{font-family:var(--font);font-size:17px;line-height:1.29;color:var(--label);background:var(--bg);
+  -webkit-font-smoothing:antialiased;min-height:100%}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{background:none;border:none;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;text-align:inherit}
+input{-webkit-user-select:text;user-select:text}
+.ic{width:22px;height:22px;flex-shrink:0;display:block}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ════════════════ Seite ════════════════ */
+#page{position:relative;min-height:100vh;background:var(--bg);
+  padding:calc(env(safe-area-inset-top) + 44px) 0 calc(env(safe-area-inset-bottom) + 112px);
+  transition:transform .45s var(--ease),clip-path .45s var(--ease),-webkit-clip-path .45s var(--ease)}
+#page.receded{transform:translateY(10px) scale(.94)}
+.content{max-width:640px;margin:0 auto;padding:0 16px}
+
+/* Navigationsleiste: durchsichtig, beim Scrollen milchig mit kleinem Titel */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;padding-top:env(safe-area-inset-top);
+  border-bottom:.5px solid transparent;transition:background-color .2s,border-color .2s}
+.nav.scrolled{background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom-color:var(--sep)}
+.nav-inner{position:relative;height:44px;max-width:640px;margin:0 auto;padding:0 14px;display:flex;align-items:center;justify-content:flex-end;gap:12px}
+.nav-title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:17px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}
+.nav.titled .nav-title{opacity:1}
+.nav-btn{position:relative;width:36px;height:36px;border-radius:50%;background:var(--fill);color:var(--label);display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+.nav-btn::after{content:'';position:absolute;inset:-5px}
+.nav-btn .ic{width:20px;height:20px}
+.nav-btn:active{opacity:.45}
+
+.large-head{padding:6px 4px 14px}
+.date-cap{font-size:13px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.02em}
+.large-title{font-family:var(--round);font-size:34px;line-height:41px;font-weight:700;letter-spacing:.01em}
+
+/* ════════════════ Gruppierte Listen ════════════════ */
+.group{position:relative;background:var(--cell);border-radius:var(--radius);overflow:hidden}
+.group.spaced{margin-top:22px}
+.group-header{font-size:20px;font-weight:700;margin:26px 4px 8px;line-height:1.25}
+.sheet .group-header{font-size:13px;font-weight:400;color:var(--label2);margin:24px 16px 7px;line-height:1.3}
+.sheet .group-header:first-child{margin-top:12px}
+.group-footer{font-size:13px;color:var(--label2);margin:7px 16px 0;line-height:1.38}
+.group-footer:empty{display:none}
+.row{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:11px 16px;background:var(--cell);text-align:left;color:var(--label)}
+.row:not(:first-child)::before,.drow-wrap:not(:first-child)::before,#drinkTypes:not(:empty) + .row::before{
+  content:'';position:absolute;top:0;right:0;left:var(--inset,16px);height:.5px;background:var(--sep);z-index:3;pointer-events:none}
+#drinkTypes:empty + .row::before{display:none}
+.tappable{transition:background-color .35s}
+.tappable:active{background:var(--press);transition:none}
+.row-label{flex:1;min-width:0}
+.row-label.muted{color:var(--label2)}
+.row-value{color:var(--label2);text-align:right;white-space:nowrap}
+.row-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.row-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-sub{font-size:15px;color:var(--label2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.row-link{color:var(--tint);font-weight:600}
+.row .chev{width:13px;height:13px;color:var(--label3);margin-left:-4px}
+.row-ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:17px}
+.row-ic .ic{width:18px;height:18px}
+.ic-red{background:#FF3B30}.ic-blue{background:#007AFF}.ic-green{background:#34C759}.ic-gray{background:#8E8E93}
+.venue-ic{background:var(--fill)}
+.row.action{justify-content:center;color:var(--tint);font-weight:500}
+.row.action.danger{color:var(--red)}
+.row-total .row-label{font-weight:600}
+.row-total .row-value{color:var(--label);font-family:var(--round);font-weight:700;font-size:22px}
+.row-tip{flex-direction:column;align-items:stretch;gap:10px}
+.row-line{display:flex;align-items:center;gap:12px}
+
+/* ════════════════ Getränkezeilen ════════════════ */
+.drow-wrap{position:relative;overflow:hidden;--inset:72px}
+.drow-wrap:has(.drow.dragging)::before{opacity:0}
+.swipe-bg{position:absolute;inset:0;display:flex;align-items:center;color:#fff;font-family:var(--round);font-size:20px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .12s}
+.swipe-bg.add{background:var(--green-fill);justify-content:flex-start;padding-left:22px}
+.swipe-bg.sub{background:var(--red-fill);justify-content:flex-end;padding-right:22px}
+.swipe-bg.snapped span{animation:snap-pop .3s var(--spring)}
+@keyframes snap-pop{0%{transform:scale(1)}45%{transform:scale(1.3)}100%{transform:scale(1)}}
+.drow{position:relative;display:flex;align-items:center;gap:12px;min-height:68px;padding:10px 12px 10px 16px;background:var(--cell);
+  transition:transform .35s var(--ease),background-color .35s;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.drow.dragging{transition:none}
+.drow:has(.drow-info:active){background:var(--press);transition:none}
+.logo{width:44px;height:44px;border-radius:10px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--fill);font-size:25px;line-height:1}
+.logo img{width:100%;height:100%;object-fit:cover;display:block}
+.logo.mono{color:#fff;font-family:var(--round);font-size:21px;font-weight:700}
+.drow-info{flex:1;min-width:0;cursor:pointer;padding:4px 0}
+.drow-name{font-size:17px;font-weight:600;line-height:1.22;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  -webkit-hyphens:auto;hyphens:auto;overflow-wrap:break-word}
+.drow-price{font-size:15px;color:var(--label2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.drow-count{font-family:var(--round);font-size:26px;font-weight:700;min-width:30px;text-align:center;color:var(--tint);font-variant-numeric:tabular-nums;transition:color .2s}
+.drow-count.zero{color:var(--label2);font-weight:600}
+.drow-count.bump{animation:count-bump .32s var(--spring)}
+@keyframes count-bump{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+.add-btn{position:relative;width:46px;height:46px;border-radius:50%;background:var(--tint-fill);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
+  transition:transform .15s,background-color .2s,color .2s;touch-action:manipulation}
+.add-btn .ic{width:24px;height:24px}
+.add-btn:active{transform:scale(.88)}
+.add-btn.disabled{background:var(--fill);color:var(--label3)}
+.add-btn.disabled:active{transform:none}
+/* Unsichtbarer nativer Schalter über dem Plus: ein echter Fingertipp darauf löst auf dem iPhone die Haptik aus */
+.hx{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;clip-path:inset(0 round 999px);cursor:pointer;z-index:2}
+.ring{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);transform:rotate(-90deg);pointer-events:none}
+.ring circle{fill:none;stroke:var(--green-fill);stroke-width:3;stroke-linecap:round;stroke-dasharray:0 999;opacity:0}
+.add-btn.cooling-sub .ring circle{stroke:var(--red-fill)}
+.add-row{--inset:72px;color:var(--tint)}
+.add-row .add-ic{width:44px;display:flex;justify-content:center;color:var(--tint-fill)}
+.add-row .add-ic .ic{width:28px;height:28px}
+@keyframes row-enter{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.row-enter{animation:row-enter .32s var(--ease)}
+@media (max-width:360px){
+  .bar{padding-left:16px;gap:10px}
+  .bar-btn{padding:0 18px}
+  .drow{gap:10px;padding:10px 10px 10px 14px}
+  .drow-wrap,.add-row{--inset:64px}
+  .logo{width:40px;height:40px}
+  .add-row .add-ic{width:40px}
+  .drow-count{min-width:26px;font-size:24px}
+  .add-btn{width:44px;height:44px}
 }
-h1{
-  font-family:'Nunito',sans-serif;font-weight:800;
-  font-size:clamp(2.2rem,6vw,3.5rem);letter-spacing:-0.02em;
-  color:var(--accent);text-align:center;margin-bottom:4px;line-height:1;
-}
-.subtitle{font-size:.68rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:28px}
 
-/* top bar */
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;max-width:440px;margin-bottom:6px;
-}
-.topbar-spacer{width:44px;}
-.burger-btn{
-  width:44px;height:44px;background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:5px;cursor:pointer;transition:border-color .2s;flex-shrink:0;
-}
-.burger-btn:hover{border-color:var(--accent);}
-.burger-btn:active{transform:scale(.92);}
-.burger-line{width:18px;height:2px;background:var(--text);border-radius:2px;}
+/* Bestellverlauf */
+.evt{gap:10px}
+.evt-num{width:26px;color:var(--label2);font-family:var(--round);font-weight:600;font-size:15px}
+.evt-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evt-time{color:var(--label2);font-size:15px}
+.evt-new{animation:row-enter .3s var(--ease)}
+.action-left{color:var(--tint)}
 
-/* drawer */
-.drawer-bg{
-  position:fixed;inset:0;background:rgba(70,52,30,.35);z-index:300;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .3s ease, visibility .3s;
-}
-.drawer-bg.open{opacity:1;visibility:visible;pointer-events:auto;}
-.drawer{
-  position:fixed;top:0;right:0;bottom:0;width:min(320px,90vw);
-  background:var(--surface);border-left:1px solid var(--border);
-  display:flex;flex-direction:column;
-  transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
-  z-index:301;overflow-y:auto;
-}
-.drawer-bg.open .drawer{transform:translateX(0);}
-.drawer-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:max(20px, calc(env(safe-area-inset-top) + 12px)) 20px 16px;
-  border-bottom:1px solid var(--border);
-}
-.drawer-title{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent);}
-.drawer-close{
-  width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;font-size:1rem;color:var(--muted);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .15s;
-}
-.drawer-close:hover{border-color:var(--muted);color:var(--text);}
-.drawer-close:active{transform:scale(.9);}
-.drawer-body{padding:20px 18px;flex:1;}
+/* Zahlen bewegen sich kurz, wenn sie sich ändern */
+@keyframes val-bump{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+.val-bump{animation:val-bump .3s var(--spring);transform-origin:right center}
+.bar-amount.val-bump{transform-origin:left center}
 
-/* screens */
-.screen{display:none;width:100%;max-width:440px;flex-direction:column;align-items:center;}
-.screen.active{display:flex;}
+/* ════════════════ Schwebende Leiste unten ════════════════ */
+.bar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:60;max-width:600px;margin:0 auto;
+  display:flex;align-items:center;gap:12px;padding:8px 8px 8px 20px;border-radius:32px;
+  background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  border:.5px solid var(--glass-border);box-shadow:var(--shadow);
+  transform:translateY(calc(100% + 40px));opacity:0;visibility:hidden;transition:transform .45s var(--ease),opacity .3s,visibility .45s}
+.bar.show{transform:none;opacity:1;visibility:visible}
+.bar-total{flex:1;min-width:0}
+.bar-cap{font-size:13px;font-weight:600;color:var(--label2)}
+.bar-amount{font-family:var(--round);font-size:24px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden}
+.bar-btn{height:50px;padding:0 24px;border-radius:25px;background:var(--tint-fill);color:#fff;font-size:17px;font-weight:600;white-space:nowrap;transition:opacity .15s}
+.bar-btn:active{opacity:.65}
 
-/* card */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;
-  padding:24px;width:100%;margin-bottom:14px;}
-.card-label{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;font-weight:700;}
+/* ════════════════ Segmented Control ════════════════ */
+.seg{position:relative;display:flex;width:100%;height:32px;padding:2px;border-radius:9px;background:var(--seg-bg)}
+.seg-thumb{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px) / var(--n,3));border-radius:7px;background:var(--seg-thumb);
+  box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);transition:transform .3s var(--ease),opacity .2s}
+.seg button{position:relative;z-index:1;flex:1;min-width:0;border-radius:7px;font-size:13px;font-weight:500;text-align:center;white-space:nowrap}
+.seg button.on{font-weight:600}
 
-/* inputs */
-.field-label{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
-.input-row{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);
-  border-radius:12px;padding:4px 4px 4px 14px;transition:border-color .2s;margin-bottom:13px;}
-.input-row:focus-within{border-color:var(--accent);}
-.input-row input{background:none;border:none;outline:none;color:var(--text);
-  font-family:'Nunito',sans-serif;font-size:.95rem;width:100%;padding:9px 0;}
-input::-webkit-inner-spin-button{-webkit-appearance:none}
-.input-suffix{color:var(--accent);font-size:.83rem;padding-right:13px;font-weight:500;flex-shrink:0;}
+/* Ersatz Schalter, falls der Browser keinen nativen iOS Switch kennt */
+.ios-switch{flex-shrink:0}
+html.no-switch .ios-switch{-webkit-appearance:none;appearance:none;position:relative;width:51px;height:31px;border-radius:16px;background:var(--fill);cursor:pointer;transition:background-color .25s}
+html.no-switch .ios-switch::before{content:'';position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15);transition:transform .25s var(--ease)}
+html.no-switch .ios-switch:checked{background:#34C759}
+html.no-switch .ios-switch:checked::before{transform:translateX(20px)}
 
-/* buttons */
-.btn{font-family:'Nunito',sans-serif;border:none;cursor:pointer;border-radius:12px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
-.btn-primary{background:var(--accent);color:#fff;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:500;}
-.btn-primary:hover{filter:brightness(.9);}
-.btn-primary:active{transform:scale(.97);}
-.btn-primary:disabled{background:#ece5d8;color:var(--muted);cursor:not-allowed;filter:none;}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
-.btn-ghost:hover{border-color:var(--muted);color:var(--text);}
-.btn-ghost:active,.btn-danger:active{transform:scale(.97);}
-.btn-danger{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;}
-.btn-danger:hover{border-color:var(--danger);color:var(--danger);}
+/* ════════════════ Sheets ════════════════ */
+.sheet-backdrop{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .4s var(--ease),visibility .4s;touch-action:none}
+.sheet-backdrop.open{opacity:1;visibility:visible}
+.sheet{position:fixed;left:0;right:0;bottom:0;top:calc(env(safe-area-inset-top) + 22px);z-index:310;max-width:640px;margin:0 auto;
+  --cell:var(--sheet-cell);--press:var(--sheet-press);background:var(--sheet-bg);border-radius:14px 14px 0 0;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 -2px 24px rgba(0,0,0,.18);
+  transform:translateY(105%);visibility:hidden;transition:transform .45s var(--ease),visibility .45s}
+.sheet.open{transform:none;visibility:visible}
+.sheet.dragging{transition:none}
+.sheet-grabber{position:absolute;top:5px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:3px;background:var(--label3);opacity:.7;z-index:5}
+.sheet-views{position:relative;flex:1;overflow:hidden}
+.sheet-view{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--sheet-bg);transition:transform .42s var(--ease),visibility .42s}
+.sheet-view.is-right{transform:translateX(100%);visibility:hidden}
+.sheet-view.is-left{transform:translateX(-28%);visibility:hidden}
+.sheet-head{position:relative;display:grid;grid-template-columns:minmax(max-content,1fr) minmax(0,max-content) minmax(max-content,1fr);align-items:center;column-gap:2px;height:58px;padding:14px 8px 0;flex-shrink:0;touch-action:none}
+.sheet-head > :first-child{justify-self:start}
+.sheet-head > :last-child{justify-self:end}
+.sh-title{min-width:0;font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.sh-btn{display:flex;align-items:center;gap:1px;min-width:44px;height:44px;padding:0 8px;color:var(--tint);font-size:17px;white-space:nowrap;transition:opacity .15s}
+.sh-btn.strong{font-weight:600}
+.sh-btn:active{opacity:.4}
+.sh-btn .ic{width:20px;height:20px;margin-left:-4px}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 16px calc(env(safe-area-inset-bottom) + 34px)}
 
+/* Formulare */
+.field{gap:12px}
+.field-label{width:64px;flex-shrink:0}
+.field input{flex:1;min-width:0;height:22px;border:none;outline:none;background:none;font-size:17px;color:var(--label)}
+.field input::placeholder{color:var(--label3)}
+.field input.num{text-align:right}
+.field .suffix{color:var(--label2)}
+.form-hero{display:flex;justify-content:center;padding:6px 0 20px}
+.form-hero .logo{width:80px;height:80px;border-radius:18px;font-size:42px}
+.form-hero .logo.mono{font-size:36px}
+.pd-row{--inset:52px;gap:10px}
+.pd-row input.num{flex:0 0 72px}
+.pd-del{display:flex;color:var(--red-fill);margin-left:-2px}
+.pd-del .ic,.pd-add .ic{width:24px;height:24px}
+.pd-add{display:flex;color:#34C759}
+.pd-addrow{--inset:52px;color:var(--tint)}
 
-/* drink type cards */
-.drink-types{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:14px;}
-.drink-card-wrap{position:relative;overflow:hidden;border-radius:16px;}
-.drink-card-hint-add{
-  position:absolute;inset:0;background:var(--success);border-radius:16px;
-  display:flex;align-items:center;justify-content:flex-end;padding-right:24px;
-  font-size:.85rem;font-weight:700;color:#fff;pointer-events:none;
-  transition:opacity .12s;}
-.drink-card-hint-sub{
-  position:absolute;inset:0;background:var(--danger);border-radius:16px;
-  display:flex;align-items:center;padding-left:24px;
-  font-size:.85rem;font-weight:700;color:#fff;pointer-events:none;
-  transition:opacity .12s;}
-/* eingerastet = Hint voll sichtbar, leichtes Pulsieren */
-.drink-card-hint-add.snapped,
-.drink-card-hint-sub.snapped{animation:hint-pulse .25s ease;}
-@keyframes hint-pulse{0%{filter:brightness(1)}50%{filter:brightness(1.15)}100%{filter:brightness(1)}}
-.drink-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  display:flex;align-items:center;padding:14px 16px;gap:12px;
-  position:relative;overflow:hidden;
-  transition:transform .3s cubic-bezier(.34,1.3,.64,1);
-  user-select:none;-webkit-user-select:none;
-  touch-action:pan-y;
-}
-.drink-card.dragging{transition:none;}
-.drink-card-info{flex:1;min-width:0;}
-.drink-logo-wrap {
-  width:54px;height:54px;border-radius:12px;border:1px solid transparent;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;
-}
-.drink-logo-img {
-  width:54px;height:54px;object-fit:cover;
-}
-.drink-logo-emoji-fb {
-  font-size:1.4rem;display:flex;align-items:center;justify-content:center;
-}
-.drink-card-name{font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);
-  margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25;}
-.drink-card-price{font-size:.65rem;color:var(--muted);}
-.drink-count{
-  font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);
-  min-width:42px;text-align:center;transition:transform .12s cubic-bezier(.34,1.56,.64,1);
-}
-.drink-count.bump{transform:scale(1.25);}
-.drink-add-btn{
-  width:52px;height:52px;border-radius:50%;background:var(--accent);
-  color:#fff;font-size:1.4rem;border:none;cursor:pointer;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .2s, transform .15s;position:relative;overflow:visible;
-}
-.drink-add-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
-.drink-add-btn:not(:disabled):active{transform:scale(.9);}
-/* SVG-Ring um den Button */
-.cooldown-ring{
-  position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);
-  pointer-events:none;transform:rotate(-90deg);
-}
-.cooldown-ring circle{
-  fill:none;stroke:var(--success);stroke-width:3;
-  stroke-linecap:round;
-  stroke-dasharray:0 999;
-  transition:none;
-  opacity:0;
-}
-.drink-add-btn.cooling .cooldown-ring circle{opacity:1;}
-.drink-add-btn.cooling-sub .cooldown-ring circle{opacity:1;stroke:var(--danger);}
+/* Verlauf */
+.detail-hero{text-align:center;padding:8px 0 4px}
+.detail-amount{font-family:var(--round);font-size:40px;font-weight:700;line-height:1.15}
+.detail-loc{font-size:20px;font-weight:600;margin-top:6px}
+.detail-date{font-size:15px;color:var(--label2);margin-top:2px}
+.empty{text-align:center;padding:70px 24px;color:var(--label2);font-size:15px;line-height:1.4}
+.empty .ic{width:52px;height:52px;margin:0 auto 14px;color:var(--label3)}
+.empty-title{font-size:20px;font-weight:600;color:var(--label);margin-bottom:6px}
 
-/* add drink form */
-.add-drink-form{background:var(--surface);border:1px dashed var(--border);border-radius:16px;
-  padding:18px;width:100%;margin-bottom:14px;}
-.add-drink-row{display:flex;gap:8px;align-items:flex-end;}
-.add-drink-row .input-row{flex:1;margin-bottom:0;}
-.add-drink-row .input-row.price-field{flex:0 0 110px;}
+/* Lokale in der Nähe */
+.radar{width:120px;height:120px;margin:30px auto 14px;display:block}
+.radar-ring{fill:none;stroke:var(--green-fill);stroke-width:1}
+.radar-cross{stroke:var(--green-fill);stroke-width:1.2;opacity:.4}
+.radar-dot{fill:var(--green-fill)}
+.radar-sweep{transform-origin:60px 60px;animation:radar-spin 2s linear infinite}
+.radar-pulse{fill:none;stroke:var(--green-fill);stroke-width:1.5;transform-origin:60px 60px;animation:radar-ping 2s ease-out infinite;opacity:0}
+.radar-pulse:nth-of-type(2){animation-delay:.65s}
+.radar-pulse:nth-of-type(3){animation-delay:1.3s}
+@keyframes radar-spin{to{transform:rotate(360deg)}}
+@keyframes radar-ping{0%{r:8px;opacity:.7}100%{r:54px;opacity:0}}
+.venue-wait{text-align:center;color:var(--label2);font-size:15px;padding-bottom:20px}
+#venueMap{height:210px;border-radius:var(--radius);overflow:hidden;margin:6px 0 22px;display:none;background:var(--fill)}
+html[data-theme="dark"] #venueMap .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88)}
+#venueMap .leaflet-container{font-family:var(--font)}
+#venueMap .leaflet-popup-content-wrapper,#venueMap .leaflet-popup-tip{background:var(--cell);color:var(--label);box-shadow:var(--shadow)}
+#venueMap .leaflet-popup-content-wrapper{border-radius:12px}
+#venueMap .leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.7)}
+.venue-popup{font-family:var(--font);min-width:150px}
+.venue-popup b{display:block;font-size:15px;font-weight:600;margin-bottom:2px}
+.venue-popup small{display:block;font-size:13px;color:var(--label2);margin-bottom:10px}
+.venue-popup-btn{display:block;width:100%;height:34px;border-radius:17px;background:var(--tint-fill);color:#fff;font-size:15px;font-weight:600;text-align:center}
 
-/* summary */
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.stat-box{background:var(--surface2);border-radius:12px;padding:12px 14px;border:1px solid var(--border);}
-.stat-label{font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
-.stat-value{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);}
-.stat-value.accent{color:var(--accent);}
-.total-line{border-top:1px solid var(--border);padding-top:15px;display:flex;justify-content:space-between;align-items:center;}
-.total-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
-.total-value{font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800;color:var(--success);}
+/* ════════════════ Alert ════════════════ */
+.alert-wrap{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.alert-wrap.open{opacity:1;visibility:visible}
+.alert{width:270px;border-radius:14px;overflow:hidden;background:var(--alert-bg);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+  transform:scale(1.12);transition:transform .3s var(--spring)}
+.alert-wrap.open .alert{transform:none}
+.alert-text{padding:19px 16px 18px;text-align:center}
+.alert-title{font-size:17px;font-weight:600;line-height:1.3}
+.alert-msg{font-size:13px;line-height:1.38;margin-top:3px}
+.alert-btns{display:flex;border-top:.5px solid var(--sep)}
+.alert-btns button{flex:1;height:44px;font-size:17px;color:var(--tint);text-align:center}
+.alert-btns button + button{border-left:.5px solid var(--sep)}
+.alert-btns .cancel{font-weight:600}
+.alert-btns .destructive{color:var(--red)}
+.alert-btns button:active{background:var(--fill)}
 
-/* timeline list */
-.evt-list{display:flex;flex-direction:column;}
-.evt-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
-.evt-item.evt-new{animation:slideIn .22s ease;}
-.evt-item:last-child{border-bottom:none;}
-@keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
-.evt-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 5px var(--accent);flex-shrink:0;}
-.evt-num{font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:600;color:var(--accent);width:24px;flex-shrink:0;}
-.evt-name{font-size:.85rem;color:var(--text);flex:1;}
-.evt-time{font-size:.72rem;color:var(--muted);flex-shrink:0;}
-.evt-empty{font-size:.68rem;color:var(--muted);text-align:center;padding:14px 0;letter-spacing:.1em;}
+/* ════════════════ Kontextmenü ════════════════ */
+.ctx{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+html[data-theme="dark"] .ctx{background:rgba(0,0,0,.4)}
+.ctx.open{opacity:1;visibility:visible}
+.ctx-preview{position:fixed;border-radius:14px;overflow:hidden;background:var(--cell);box-shadow:0 12px 40px rgba(0,0,0,.25);transition:transform .35s var(--spring);pointer-events:none}
+.ctx.open .ctx-preview{transform:scale(1.03)}
+.ctx-menu{position:fixed;width:250px;border-radius:13px;overflow:hidden;background:var(--menu-bg);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:0 10px 40px rgba(0,0,0,.2);transform:scale(.5);opacity:0;transition:transform .35s var(--spring),opacity .2s}
+.ctx.open .ctx-menu{transform:none;opacity:1}
+.ctx-item{display:flex;align-items:center;justify-content:space-between;width:100%;height:44px;padding:0 16px;font-size:17px;color:var(--label)}
+.ctx-item + .ctx-item{border-top:.5px solid var(--sep)}
+.ctx-item.destructive{color:var(--red)}
+.ctx-item:active{background:var(--fill)}
+.ctx-item .ic{width:20px;height:20px}
 
-/* neue Karte gleitet herein */
-@keyframes card-enter{from{opacity:0;transform:translateY(-10px) scale(.98);}to{opacity:1;transform:none;}}
-.card-enter{animation:card-enter .32s cubic-bezier(.32,.72,0,1);}
+/* ════════════════ Banner ════════════════ */
+#toast{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;z-index:600;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);
+  padding:11px 20px 11px 14px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  border:.5px solid var(--glass-border);box-shadow:var(--shadow);font-size:15px;font-weight:600;
+  transform:translate(-50%,-160%);opacity:0;transition:transform .45s var(--ease),opacity .3s;pointer-events:none}
+#toast.show{transform:translate(-50%,0);opacity:1}
+#toast span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#toast .ic{color:#34C759}
+#toast.info .ic{color:var(--label2)}
 
-/* Werte zucken kurz wenn sie sich aendern */
-@keyframes val-bump{0%{transform:scale(1);}40%{transform:scale(1.14);}100%{transform:scale(1);}}
-.val-bump{animation:val-bump .3s cubic-bezier(.34,1.4,.64,1);transform-origin:left center;}
+/* weicher Wechsel zwischen hell und dunkel */
+html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,color .35s ease,border-color .35s ease!important}
 
-/* Toast */
-#toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));
-  transform:translate(-50%,18px);background:var(--text);color:var(--bg);
-  padding:13px 24px;border-radius:26px;font-size:.8rem;font-weight:700;
-  z-index:600;opacity:0;visibility:hidden;pointer-events:none;
-  max-width:82vw;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.22);
-  transition:opacity .25s ease, transform .3s cubic-bezier(.32,.72,0,1), visibility .3s;}
-#toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);}
-
-/* weicher Wechsel beim Umschalten auf Dunkelmodus */
-html.theme-switching *{transition:background-color .35s ease, color .35s ease, border-color .35s ease !important;}
-
-/* history */
-.history-item{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:18px;width:100%;margin-bottom:12px;cursor:pointer;transition:border-color .2s, transform .12s;}
-.history-item:hover{border-color:var(--accent);}
-.history-item:active{transform:scale(.985);}
-.history-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.history-date{font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);}
-.history-location{font-size:.78rem;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px;}
-.history-total{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:800;color:var(--success);}
-.history-tags{display:flex;flex-wrap:wrap;gap:6px;}
-.history-tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
-  padding:3px 10px;font-size:.6rem;color:var(--muted);}
-.history-tag span{color:var(--accent);}
-.history-empty{font-size:.72rem;color:var(--muted);text-align:center;padding:40px 0;letter-spacing:.1em;line-height:2;}
-
-/* history detail */
-.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);
-  font-family:'Nunito',sans-serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
-  cursor:pointer;padding:0;margin-bottom:20px;transition:color .2s;}
-.back-btn:hover{color:var(--text);}
-
-/* modal */
-.modal-bg{display:flex;position:fixed;inset:0;background:rgba(70,52,30,.4);z-index:200;
-  align-items:flex-end;justify-content:center;padding:0;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .25s ease, visibility .25s;}
-.modal-bg.open{opacity:1;visibility:visible;pointer-events:auto;}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;
-  padding:28px 24px 40px;width:100%;max-width:500px;
-  transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);}
-.modal-bg.open .modal{transform:translateY(0);}
-
-/* Preisdialog sitzt oben, damit ihn die Tastatur nicht verdeckt */
-#modal-price{align-items:flex-start;padding:0 16px;}
-#modal-price .modal{margin-top:max(14vh, calc(env(safe-area-inset-top) + 56px));
-  border-radius:20px;max-width:380px;padding:24px 22px 26px;
-  transform:translateY(-26px) scale(.97);}
-#modal-price.open .modal{transform:none;}
-.modal-title{font-family:'Nunito',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:20px;}
-.modal-actions{display:flex;gap:10px;margin-top:6px;}
-.btn-modal-save{flex:1;height:48px;border-radius:12px;}
-.btn-modal-cancel{height:48px;padding:0 18px;border-radius:12px;}
-
-/* close-evening modal */
-.close-summary{background:var(--surface2);border-radius:14px;padding:16px;margin-bottom:16px;}
-.close-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.75rem;}
-.close-row-label{color:var(--muted);}
-.close-row-val{color:var(--text);}
-.close-row-val.gold{color:var(--accent);}
-.close-row-val.green{color:var(--success);font-weight:500;}
-.card,.drink-card,.history-item,.add-drink-form{box-shadow:0 2px 12px rgba(120,90,40,.06);}
-.chips{display:flex;flex-wrap:wrap;gap:8px;}
-.chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;
-  font-size:.7rem;color:var(--text);cursor:pointer;font-family:inherit;transition:all .15s;}
-.chip:hover{border-color:var(--accent);color:var(--accent);}
-.chip:active{transform:scale(.95);}
-.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
-#paceLine{display:none;margin-top:12px;font-size:.68rem;color:var(--muted);text-align:center;}
-
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
-.toggle-row:last-child{border-bottom:none;}
-.toggle-label{font-size:.95rem;font-weight:700;color:var(--text);}
-.toggle-sub{font-size:.75rem;color:var(--muted);margin-top:2px;}
-.toggle{position:relative;width:44px;height:26px;flex-shrink:0;}
-.toggle input{opacity:0;width:0;height:0;}
-.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:13px;cursor:pointer;transition:.2s;}
-.toggle-slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
-.toggle input:checked + .toggle-slider{background:var(--accent);}
-.toggle input:checked + .toggle-slider:before{transform:translateX(18px);}
-/* ── Radar ── */
-.radar-wrap{position:relative;width:120px;height:120px;margin:0 auto 20px;}
-.radar-svg{width:120px;height:120px;}
-.radar-ring{fill:none;stroke:#1f9d63;stroke-width:1;}
-.radar-cross{stroke:#1f9d63;stroke-width:1.2;opacity:.4;}
-.radar-dot{fill:#1f9d63;}
-.radar-sweep{
-  transform-origin:60px 60px;
-  animation:radar-spin 2s linear infinite;
-}
-.radar-pulse{
-  fill:none;stroke:#1f9d63;stroke-width:1.5;
-  transform-origin:60px 60px;
-  animation:radar-ping 2s ease-out infinite;
-  opacity:0;
-}
-.radar-pulse:nth-child(2){animation-delay:.65s;}
-.radar-pulse:nth-child(3){animation-delay:1.3s;}
-@keyframes radar-spin{
-  from{transform:rotate(0deg);}
-  to{transform:rotate(360deg);}
-}
-@keyframes radar-ping{
-  0%  {r:8px;opacity:.7;}
-  100%{r:54px;opacity:0;}
-}
-#venueModal{display:flex;position:fixed;inset:0;z-index:500;background:rgba(70,52,30,.45);align-items:flex-end;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .25s ease, visibility .25s;}
-#venueModal.open{opacity:1;visibility:visible;pointer-events:auto;}
-#venueSheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px 20px 36px;max-height:82vh;overflow-y:auto;
-  transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);}
-#venueModal.open #venueSheet{transform:translateY(0);}
-#venueMap{width:100%;height:220px;border-radius:14px;overflow:hidden;margin-bottom:16px;display:none;}
-.venue-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
-.venue-item:last-child{border-bottom:none;}
-.venue-item:active{opacity:.7;}
-.venue-dist{font-size:.65rem;color:var(--muted);margin-top:2px;}
-
+/* Bewegung reduzieren: alles sofort, ohne Übergänge (auch keine Mini Übergänge, die Fokus und Sichtbarkeit verzögern) */
 @media (prefers-reduced-motion: reduce){
-  .modal,#venueSheet,.drawer{transition-duration:.01ms;}
-  .card-enter,.val-bump,.evt-item.evt-new,.drink-card-hint-add.snapped,
-  .drink-card-hint-sub.snapped{animation:none;}
-  .drink-count.bump{transform:none;}
-  html.theme-switching *{transition:none !important;}
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-.venue-popup{font-family:'Nunito',sans-serif;min-width:140px;}
-.venue-popup b{display:block;font-size:.85rem;font-weight:700;margin-bottom:2px;}
-.venue-popup small{font-size:.7rem;color:#8a8274;display:block;margin-bottom:8px;}
-.venue-popup-btn{
-  display:block;width:100%;padding:7px 0;background:#e0701f;color:#fff;
-  border:none;border-radius:8px;font-size:.72rem;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:inherit;}
-.venue-popup-btn:active{opacity:.8;}
-</style>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
+<div id="safeProbe" aria-hidden="true" style="position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none"></div>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-spacer"></div>
-  <div>
-    <h1>Drinks</h1>
-    <p class="subtitle" style="margin-bottom:0">Bestellübersicht</p>
-  </div>
-  <button class="burger-btn" onclick="openDrawer()" aria-label="Verlauf">
-    <div class="burger-line"></div>
-    <div class="burger-line"></div>
-    <div class="burger-line"></div>
-  </button>
-</div>
-<div style="height:28px"></div>
+<!-- Symbole im Stil von SF Symbols (eigene Zeichnungen) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5.2l3.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="3.22 3.22"/><circle cx="12" cy="12" r="6.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-minus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12h10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 4.5l7.5 7.5L9 19.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 4.5L7.5 12l7.5 7.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 2a7.2 7.2 0 0 0-7.2 7.2C4.8 14.6 12 22 12 22s7.2-7.4 7.2-12.8A7.2 7.2 0 0 0 12 2zm0 4.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2z"/></symbol>
+  <symbol id="i-location" viewBox="0 0 24 24"><path fill="currentColor" d="M20.6 3.4L3.6 10.6c-.8.3-.7 1.4.1 1.6l7 1.4 1.4 7c.2.8 1.3.9 1.6.1l7.2-17c.3-.6-.3-1.2-.9-.9z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 3.5h4M6.2 7l.9 12.4c.1 1 .9 1.6 1.8 1.6h6.2c.9 0 1.7-.6 1.8-1.6L17.8 7M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M15.6 4.4l4 4L9 19l-5 1 1-5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M13.6 6.4l4 4" stroke="currentColor" stroke-width="1.9"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.4l3.3 3.3L17.2 8.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 10.8v6" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.4" fill="#fff"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3.5v11M8 7.5l4-4 4 4M8.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 3.5v11M8 10.5l4 4 4-4M8.5 7.5H6.5A1.5 1.5 0 0 0 5 9v10.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V9a1.5 1.5 0 0 0-1.5-1.5h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
 
-<!-- VENUE PICKER -->
-<div id="venueModal" onclick="if(event.target===this)closeVenuePicker()">
-  <div id="venueSheet">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div style="font-size:.85rem;font-weight:700;color:var(--text);">📍 Lokale in der Nähe</div>
-      <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;" onclick="closeVenuePicker()">✕</button>
+<div id="page">
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <div class="nav-title" aria-hidden="true">Drinks</div>
+      <button class="nav-btn" onclick="openHistory()" aria-label="Verlauf"><svg class="ic"><use href="#i-clock"/></svg></button>
+      <button class="nav-btn" onclick="openSettings()" aria-label="Einstellungen"><svg class="ic"><use href="#i-gear"/></svg></button>
     </div>
-    <div id="venueMap"></div>
-    <div id="venueList"></div>
-  </div>
-</div>
+  </header>
 
-<!-- DRAWER -->
-<div class="drawer-bg" id="drawerBg" onclick="closeDrawer(event)">
-  <div class="drawer" id="drawer">
-    <div class="drawer-header">
-      <div class="drawer-title">Menü</div>
-      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  <main class="content">
+    <div class="large-head">
+      <div class="date-cap" id="dateCap"></div>
+      <h1 class="large-title" id="largeTitle">Drinks</h1>
     </div>
-    <div class="drawer-body">
-      <button onclick="toggleSettings()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 12px;" id="settingsToggleBtn">
-        <div class="card-label" style="margin-bottom:0;">Einstellungen</div>
-        <span id="settingsChevron" style="color:var(--muted);font-size:.8rem;transition:transform .2s;">▼</span>
+
+    <div class="group" id="drinkGroup">
+      <div id="drinkTypes"></div>
+      <button class="row tappable add-row" onclick="openDrinkSheet()">
+        <span class="add-ic"><svg class="ic"><use href="#i-plus-circle"/></svg></span><span>Getränk hinzufügen</span>
       </button>
-      <div id="settingsBody" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);">
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Ortserkennung</div>
-            <div class="toggle-sub">Lokale in der Nähe beim Abend abschließen vorschlagen</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="gpsToggle" onchange="saveGpsSetting(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
+    </div>
+    <div class="group-footer" id="drinkHint"></div>
+
+    <section id="presetQuick" hidden>
+      <h2 class="group-header">Preise laden</h2>
+      <div class="group" id="presetQuickList"></div>
+      <div class="group-footer">Übernimmt die zuletzt bezahlten Preise eines Ortes.</div>
+    </section>
+
+    <section id="sumSection" hidden>
+      <h2 class="group-header">Abrechnung</h2>
+      <div class="group">
+        <div class="row"><span class="row-label">Drinks</span><span class="row-value num" id="sumCount">0</span></div>
+        <div class="row"><span class="row-label">Zwischensumme</span><span class="row-value num" id="sumSubtotal">€&nbsp;0,00</span></div>
+        <div class="row row-tip">
+          <div class="row-line"><span class="row-label" id="sumTipLabel">Trinkgeld</span><span class="row-value num" id="sumTip">€&nbsp;0,00</span></div>
+          <div class="seg" id="tipSeg" role="radiogroup" aria-label="Trinkgeld"></div>
         </div>
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Dark Mode</div>
-            <div class="toggle-sub">Dunkles Design für abends</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="darkToggle" onchange="saveDarkMode(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
+        <div class="row row-total"><span class="row-label">Gesamt</span><span class="row-value num" id="sumTotal">€&nbsp;0,00</span></div>
+      </div>
+      <div class="group-footer" id="paceLine"></div>
+    </section>
+
+    <section id="evtSection" hidden>
+      <h2 class="group-header">Bestellverlauf</h2>
+      <div class="group" id="evtList"></div>
+    </section>
+  </main>
+
+  <div class="bar" id="bottomBar" aria-hidden="true">
+    <div class="bar-total"><div class="bar-cap">Gesamt</div><div class="bar-amount num" id="barTotal">€&nbsp;0,00</div></div>
+    <button class="bar-btn" onclick="openCloseEveningFlow()">Abschließen</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+
+<!-- ════ Sheet: Getränk hinzufügen / bearbeiten ════ -->
+<section class="sheet" id="sheet-drink" role="dialog" aria-modal="true" aria-labelledby="drinkSheetTitle" aria-hidden="true">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-views">
+    <div class="sheet-view" data-view="main">
+      <div class="sheet-head">
+        <button class="sh-btn" onclick="closeSheet()">Abbrechen</button>
+        <div class="sh-title" id="drinkSheetTitle">Neues Getränk</div>
+        <button class="sh-btn strong" id="drinkSaveBtn" onclick="saveDrink()">Hinzufügen</button>
+      </div>
+      <div class="sheet-body">
+        <div class="form-hero" id="drinkHero"></div>
+        <div class="group">
+          <label class="row field"><span class="field-label">Name</span>
+            <input type="text" id="m-name" placeholder="z.B. Zipfer" autocomplete="off" autocapitalize="words" enterkeyhint="next"
+                   oninput="updateDrinkHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('m-price').focus();}"></label>
+          <label class="row field"><span class="field-label">Preis</span>
+            <input type="text" class="num" id="m-price" inputmode="decimal" placeholder="0,00" autocomplete="off" enterkeyhint="done"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();saveDrink();}"><span class="suffix">€</span></label>
         </div>
-        <div class="toggle-row" style="border-bottom:none;margin-bottom:8px;">
-          <div style="flex:1;min-width:0;">
-            <div class="toggle-label">Datensicherung</div>
-            <div class="toggle-sub">History und Orte sichern</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;">
-            <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;font-size:.65rem;" onclick="exportData()">Export</button>
-            <button class="btn btn-ghost" style="height:32px;padding:0 12px;border-radius:8px;font-size:.65rem;" onclick="document.getElementById('importFile').click()">Import</button>
-            <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
-          </div>
+        <div class="group-footer" id="drinkFooter">Bekannte Marken bekommen automatisch ihr Logo.</div>
+        <div class="group spaced" id="drinkDeleteGroup" hidden>
+          <button class="row tappable action danger" onclick="removeFromEditor()">Getränk entfernen</button>
         </div>
       </div>
-      <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
-      <button onclick="togglePresetSection()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
-        <div class="card-label" style="margin-bottom:0;">Meine Orte</div>
-        <span id="presetChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
-      </button>
-      <div id="presetWrap" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);">
-        <div id="preset-list-view">
-          <div id="presetList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ Sheet: Abend abschließen ════ -->
+<section class="sheet" id="sheet-close" role="dialog" aria-modal="true" aria-label="Abend abschließen" aria-hidden="true">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-views">
+    <div class="sheet-view" data-view="main">
+      <div class="sheet-head">
+        <button class="sh-btn" onclick="closeSheet()">Abbrechen</button>
+        <div class="sh-title">Abend abschließen</div>
+        <button class="sh-btn strong" onclick="saveEvening()">Speichern</button>
+      </div>
+      <div class="sheet-body">
+        <h2 class="group-header">Ort</h2>
+        <div class="group">
+          <label class="row field" style="--inset:58px"><span class="row-ic ic-red"><svg class="ic"><use href="#i-pin"/></svg></span>
+            <input type="text" id="m-location" placeholder="Lokal oder Ort" autocomplete="off" autocapitalize="words" enterkeyhint="done"
+                   oninput="updateLocChipsVisibility()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEvening();}"></label>
+          <button class="row tappable" id="nearbyRow" style="--inset:58px" onclick="openNearby()">
+            <span class="row-ic ic-blue"><svg class="ic"><use href="#i-location"/></svg></span><span class="row-label">Lokale in der Nähe</span>
+            <svg class="ic chev"><use href="#i-chevron-right"/></svg></button>
         </div>
-        <div id="preset-edit-view" style="display:none;"></div>
-      </div>
-
-      <div style="height:1px;background:var(--border);margin:14px 0 20px;"></div>
-
-      <button onclick="toggleVerlaufSection()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:4px 0 14px;">
-        <div class="card-label" style="margin-bottom:0;">Verlauf</div>
-        <span id="verlaufChevron" style="color:var(--muted);font-size:.75rem;transition:transform .25s;">▼</span>
-      </button>
-      <div id="verlaufWrap" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);">
-        <div id="history-list-view"></div>
-        <div id="history-detail-view" style="display:none;"></div>
+        <div class="group-footer" id="gpsNote" hidden></div>
+        <div id="locRecentWrap" hidden>
+          <h2 class="group-header">Zuletzt</h2>
+          <div class="group" id="locRecent"></div>
+        </div>
+        <h2 class="group-header">Rechnung</h2>
+        <div class="group" id="closeBill"></div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════ MAIN SCREEN ════════════════════════════════ -->
-<div class="screen active" id="screen-main">
-
-  <!-- drink type list -->
-  <div class="drink-types" id="drinkTypes"></div>
-
-  <!-- add drink form -->
-  <div class="add-drink-form">
-    <div class="card-label">Neues Getränk hinzufügen</div>
-    <div class="add-drink-row">
-      <div class="input-row" style="margin-bottom:0;flex:1">
-        <input type="text" id="new-name" placeholder="Name (z.B. Bier)" onkeydown="if(event.key===&quot;Enter&quot;){event.preventDefault();document.getElementById(&quot;new-price&quot;).focus();}" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
+    <div class="sheet-view is-right" data-view="venues">
+      <div class="sheet-head">
+        <button class="sh-btn" onclick="backFromVenues()"><svg class="ic"><use href="#i-chevron-left"/></svg>Zurück</button>
+        <div class="sh-title">Lokale in der Nähe</div>
+        <span class="sh-btn"></span>
       </div>
-      <div class="input-row price-field" style="margin-bottom:0;">
-        <input type="text" inputmode="decimal" id="new-price" placeholder="0,00" onkeydown="if(event.key===&quot;Enter&quot;){event.preventDefault();addDrinkType();}" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
-        <span class="input-suffix">€</span>
+      <div class="sheet-body">
+        <div id="venueStatus"></div>
+        <div id="venueMap"></div>
+        <div class="group" id="venueList" hidden></div>
       </div>
-      <button class="btn btn-primary" style="height:44px;padding:0 14px;white-space:nowrap;border-radius:12px;" onclick="addDrinkType()">+</button>
     </div>
   </div>
+</section>
 
-  <!-- summary -->
-  <div class="card">
-    <div class="card-label">Abrechnung</div>
-    <div class="summary-grid">
-      <div class="stat-box"><div class="stat-label">Gesamt Drinks</div><div class="stat-value" id="sumCount">0</div></div>
-      <div class="stat-box"><div class="stat-label">Subtotal</div><div class="stat-value" id="sumSubtotal">€ 0,00</div></div>
-      <div class="stat-box"><div class="stat-label">Trinkgeld</div><div class="stat-value" id="sumTip">€ 0,00</div></div>
-      <div class="stat-box" style="cursor:pointer;" onclick="openModal('modal-settings')"><div class="stat-label">Trinkgeld % ✎</div><div class="stat-value accent" id="sumTipPct">10 %</div></div>
+<!-- ════ Sheet: Verlauf ════ -->
+<section class="sheet" id="sheet-history" role="dialog" aria-modal="true" aria-label="Verlauf" aria-hidden="true">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-views">
+    <div class="sheet-view" data-view="list">
+      <div class="sheet-head">
+        <span class="sh-btn"></span>
+        <div class="sh-title">Verlauf</div>
+        <button class="sh-btn strong" onclick="closeSheet()">Fertig</button>
+      </div>
+      <div class="sheet-body" id="historyList"></div>
     </div>
-    <div class="total-line">
-      <div class="total-label">Gesamt</div>
-      <div class="total-value" id="sumTotal">€ 0,00</div>
+    <div class="sheet-view is-right" data-view="detail">
+      <div class="sheet-head">
+        <button class="sh-btn" onclick="setView('sheet-history','list')"><svg class="ic"><use href="#i-chevron-left"/></svg>Verlauf</button>
+        <div class="sh-title" id="histDetailTitle"></div>
+        <span class="sh-btn"></span>
+      </div>
+      <div class="sheet-body" id="historyDetail"></div>
     </div>
-    <div id="paceLine"></div>
   </div>
+</section>
 
-  <!-- event log -->
-  <div class="card" id="evtCard" style="display:none;">
-    <div class="card-label">Bestellverlauf</div>
-    <div class="evt-list" id="evtList"></div>
+<!-- ════ Sheet: Einstellungen ════ -->
+<section class="sheet" id="sheet-settings" role="dialog" aria-modal="true" aria-label="Einstellungen" aria-hidden="true">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-views">
+    <div class="sheet-view" data-view="root">
+      <div class="sheet-head">
+        <span class="sh-btn"></span>
+        <div class="sh-title">Einstellungen</div>
+        <button class="sh-btn strong" onclick="closeSheet()">Fertig</button>
+      </div>
+      <div class="sheet-body">
+        <h2 class="group-header">Darstellung</h2>
+        <div class="group"><div class="row"><div class="seg" id="themeSeg" role="radiogroup" aria-label="Darstellung"></div></div></div>
+        <h2 class="group-header">Ortserkennung</h2>
+        <div class="group">
+          <label class="row"><span class="row-label">Lokale automatisch suchen</span>
+            <input type="checkbox" switch class="ios-switch" id="gpsToggle" onchange="saveGpsSetting(this.checked)"></label>
+        </div>
+        <div class="group-footer">Schlägt beim Abschließen Lokale im Umkreis von 150 m vor. Dafür wird der Standort abgefragt.</div>
+        <h2 class="group-header">Meine Orte</h2>
+        <div class="group" id="presetList"></div>
+        <div class="group-footer">Orte und Preise werden beim Abschließen eines Abends automatisch gespeichert.</div>
+        <h2 class="group-header">Daten</h2>
+        <div class="group">
+          <button class="row tappable" style="--inset:58px" onclick="exportData()"><span class="row-ic ic-blue"><svg class="ic"><use href="#i-export"/></svg></span><span class="row-label">Backup exportieren</span></button>
+          <button class="row tappable" style="--inset:58px" onclick="$('importFile').click()"><span class="row-ic ic-green"><svg class="ic"><use href="#i-import"/></svg></span><span class="row-label">Backup importieren</span></button>
+        </div>
+        <div class="group-footer">Sichert Verlauf, Orte und Preise als Datei.</div>
+      </div>
+    </div>
+    <div class="sheet-view is-right" data-view="place">
+      <div class="sheet-head">
+        <button class="sh-btn" onclick="closePresetEditor()"><svg class="ic"><use href="#i-chevron-left"/></svg>Zurück</button>
+        <div class="sh-title" id="placeTitle">Ort</div>
+        <span class="sh-btn"></span>
+      </div>
+      <div class="sheet-body" id="placeBody"></div>
+    </div>
   </div>
+</section>
 
-  <!-- actions -->
-  <button class="btn btn-primary" id="btnCloseEvening" style="display:none;width:100%;height:56px;border-radius:14px;font-size:.8rem;letter-spacing:.15em;margin-bottom:10px;" onclick="openCloseEveningWithGps()">
-    🌙 &nbsp;Abend abschließen
-  </button>
-
+<!-- ════ Kontextmenü (lange drücken) ════ -->
+<div class="ctx" id="ctx" onclick="ctxBackdropTap(event)">
+  <div class="ctx-preview" id="ctxPreview"></div>
+  <div class="ctx-menu" id="ctxMenu" role="menu"></div>
 </div>
 
-<!-- (history now in drawer) -->
-
-<!-- ════════════════════════════════ MODALS ════════════════════════════════ -->
-
-<!-- Settings modal -->
-<div class="modal-bg" id="modal-settings" onclick="if(event.target===this)closeModal('modal-settings')">
-  <div class="modal">
-    <div class="modal-title">Trinkgeld</div>
-    <div class="field-label">Trinkgeld</div>
-    <div class="chips" style="margin-bottom:10px;" id="tipChips">
-      <button class="chip" onclick="setTipChip(0)">0 %</button>
-      <button class="chip" onclick="setTipChip(5)">5 %</button>
-      <button class="chip" onclick="setTipChip(10)">10 %</button>
-      <button class="chip" onclick="setTipChip(15)">15 %</button>
-      <button class="chip" onclick="setTipChip(20)">20 %</button>
-    </div>
-    <input type="hidden" id="m-tip">
-  </div>
-</div>
-
-<!-- Close Evening modal -->
-<div class="modal-bg" id="modal-close" onclick="if(event.target===this)closeModal('modal-close')">
-  <div class="modal">
-    <div class="modal-title">Abend abschließen</div>
-    <div class="close-summary" id="closeSummary"></div>
-    <div id="gpsNote" style="display:none;font-size:.7rem;color:var(--muted);margin:0 0 8px;">📡 Standort nicht verfügbar, Ort bitte manuell wählen.</div>
-    <div class="field-label">Ort / Bar</div>
-    <div class="input-row">
-      <input type="text" id="m-location" placeholder="z.B. Loft Bar, Wien" oninput="updateLocChipsVisibility()" style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;width:100%;padding:9px 0;">
-    </div>
-    <div class="chips" id="locChips" style="margin:-4px 0 14px;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-close')">Abbrechen</button>
-      <button class="btn btn-primary btn-modal-save" onclick="saveEvening()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- PREIS AENDERN -->
-<div class="modal-bg" id="modal-price" onclick="if(event.target===this)closeModal('modal-price')">
-  <div class="modal">
-    <div class="modal-title">Preis ändern</div>
-    <div class="field-label" id="priceDrinkName">Getränk</div>
-    <div class="input-row price-field" style="margin-bottom:20px;">
-      <input type="text" inputmode="decimal" id="m-price" placeholder="0,00"
-             onkeydown="if(event.key===&quot;Enter&quot;){event.preventDefault();savePrice();}"
-             style="background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:1.05rem;width:100%;padding:9px 0;">
-      <span class="input-suffix">€</span>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-price')">Abbrechen</button>
-      <button class="btn btn-primary btn-modal-save" onclick="savePrice()">Speichern</button>
-    </div>
+<!-- ════ Alert ════ -->
+<div class="alert-wrap" id="alert" role="alertdialog" aria-modal="true" aria-labelledby="alertTitle" aria-describedby="alertMsg">
+  <div class="alert">
+    <div class="alert-text"><div class="alert-title" id="alertTitle"></div><div class="alert-msg" id="alertMsg"></div></div>
+    <div class="alert-btns"><button class="cancel" onclick="closeAlert(false)">Abbrechen</button><button id="alertOk" onclick="closeAlert(true)">OK</button></div>
   </div>
 </div>
 
-<!-- RUECKFRAGE -->
-<div class="modal-bg" id="modal-confirm" onclick="if(event.target===this)closeModal('modal-confirm')">
-  <div class="modal">
-    <div class="modal-title" id="confirmTitle"></div>
-    <div id="confirmText" style="font-size:.82rem;color:var(--muted);line-height:1.55;margin-bottom:24px;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-modal-cancel" onclick="closeModal('modal-confirm')">Abbrechen</button>
-      <button class="btn btn-primary btn-modal-save" id="confirmOk" onclick="runConfirm()">Löschen</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept=".json,application/json" hidden onchange="importData(this)">
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────────
+'use strict';
+// ════════════════ Zustand ════════════════
 let tipPct = 10;
-let drinkTypes = []; // [{id, name, price, count, cooldown}]
-let eventLog  = []; // [{typeId, typeName, price, time}]
-let history   = []; // saved evenings
+let drinkTypes = [];       // [{id, name, price, count, cooldown, timer}]
+let eventLog = [];         // [{typeId, typeName, price, time}]
+let history = [];          // gespeicherte Abende
+let locationPresets = [];  // [{id, name, drinks:[{name, price}]}]
+let gpsEnabled = false;
 
-const COOLDOWN = 2000;
-const LS_KEY   = 'drinks_app_v1';
+const COOLDOWN    = 2000;
+const LS_KEY      = 'drinks_app_v1';
+const TIP_OPTIONS = [0, 5, 10, 15, 20];
+const EVT_LIMIT   = 5;
+const LOCALE      = 'de-AT';
 
-// ── Bewegung, Toast, Rückfrage ────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const icon = (name, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
-let _toastTimer = null;
-function toast(msg) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
-}
+// iOS Safari zeigt :active Zustände nur, wenn irgendwo ein touchstart Listener hängt
+document.addEventListener('touchstart', () => {}, { passive: true });
 
-let _confirmCb = null;
-function askConfirm(title, text, okLabel, cb) {
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmText').textContent  = text;
-  document.getElementById('confirmOk').textContent    = okLabel;
-  _confirmCb = cb;
-  openModal('modal-confirm');
+// ════════════════ Formatierung ════════════════
+const fmt       = n => '€ ' + n.toFixed(2).replace('.', ',');   // geschütztes Leerzeichen, bricht nie um
+const fmtPct    = p => String(p).replace('.', ',') + ' %';
+const timeStr   = d => d.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+const dateLong  = d => d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const dateShort = d => d.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const dateCap   = d => d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+const monthLbl  = d => d.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' });
+const drinkCountLabel = n => `${n} Getränk${n === 1 ? '' : 'e'}`;
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-function runConfirm() {
-  closeModal('modal-confirm');
-  const cb = _confirmCb; _confirmCb = null;
-  if (cb) cb();
-}
+let nextId = Date.now();
+function uid() { return ++nextId; }
 
-// ── Persistence ───────────────────────────────────────────────────────────────
+function totalCount()    { return drinkTypes.reduce((s, d) => s + d.count, 0); }
+function totalSubtotal() { return drinkTypes.reduce((s, d) => s + d.count * d.price, 0); }
+function totalTip()      { return totalSubtotal() * tipPct / 100; }
+function totalGrand()    { return totalSubtotal() + totalTip(); }
+
+// ════════════════ Speichern / Laden ════════════════
 function save() {
-  localStorage.setItem(LS_KEY, JSON.stringify({ tipPct, drinkTypes, eventLog, history, locationPresets }));
+  const plain = drinkTypes.map(({ id, name, price, count }) => ({ id, name, price, count }));
+  localStorage.setItem(LS_KEY, JSON.stringify({ tipPct, drinkTypes: plain, eventLog, history, locationPresets }));
+}
+function applyData(d) {
+  const t = Number(d.tipPct);
+  tipPct = d.tipPct != null && Number.isFinite(t) && t >= 0 ? t : 10;
+  // Reihenfolge: beim Laden einmal nach Anzahl sortieren, danach bleibt sie stabil
+  drinkTypes = (d.drinkTypes ?? [])
+    .filter(dt => dt && String(dt.name ?? '').trim())
+    .map(dt => ({ id: dt.id ?? uid(), name: String(dt.name), price: num(dt.price), count: Math.max(0, Math.floor(num(dt.count))), cooldown: false, timer: null }))
+    .sort((a, b) => b.count - a.count);
+  eventLog = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
+  history  = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), drinks: h.drinks || [],
+    events: (h.events || []).map(e => ({ ...e, time: new Date(e.time) })) }));
+  if (d.locationPresets == null) { locationPresets = []; migratePresets(); }
+  else locationPresets = d.locationPresets;
 }
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(LS_KEY));
-    if (!d) return;
-    tipPct     = d.tipPct     ?? 10;
-    drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
-    eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
-    history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), drinks: h.drinks, events: (h.events||[]).map(e=>({...e,time:new Date(e.time)})) }));
-    if (d.locationPresets == null) { locationPresets = []; migratePresets(); }  // einmalige Migration aus History
-    else locationPresets = d.locationPresets;
-  } catch(e) {}
+    if (d) applyData(d);
+  } catch (e) {}
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt     = n  => '€ ' + n.toFixed(2).replace(/\./g, ',');
-const timeStr = d  => d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-const dateStr = d  => d.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-const dateShort = d => d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
-
-let nextId = Date.now();
-function uid() { return ++nextId; }
-
-function totalCount()    { return drinkTypes.reduce((s,d) => s + d.count, 0); }
-function totalSubtotal() { return drinkTypes.reduce((s,d) => s + d.count * d.price, 0); }
-function totalTip()      { return totalSubtotal() * tipPct / 100; }
-
-function setTipChip(val) {
-  document.getElementById('m-tip').value = val;
-  syncTipChips();
-  tipPct = val;
-  updatePill();
-  renderSummary();
-  save();
-  closeModal('modal-settings');
+// ════════════════ Banner und Alert ════════════════
+let _toastTimer = null;
+function toast(msg, kind = 'ok') {
+  const t = $('toast');
+  t.className = kind === 'info' ? 'info' : '';
+  t.innerHTML = icon(kind === 'info' ? 'info' : 'check-circle') + `<span>${esc(msg)}</span>`;
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2300);
 }
-function syncTipChips() {
-  const val = parseFloat((document.getElementById('m-tip').value || '0').replace(',', '.')) || 0;
-  document.querySelectorAll('#tipChips .chip').forEach(c => {
-    const cv = parseFloat(c.textContent);
-    c.classList.toggle('active', cv === val);
+
+let _alertCb = null;
+function askConfirm(title, text, okLabel, cb, destructive = true) {
+  $('alertTitle').textContent = title;
+  $('alertMsg').textContent = text;
+  const ok = $('alertOk');
+  ok.textContent = okLabel;
+  ok.classList.toggle('destructive', destructive);
+  _alertCb = cb;
+  $('alert').classList.add('open');
+}
+function closeAlert(run) {
+  $('alert').classList.remove('open');
+  const cb = _alertCb; _alertCb = null;
+  if (run && cb) cb();
+}
+
+// ════════════════ Sheets ════════════════
+let _openSheet = null;
+let _frozen = null;
+let _unfreezeTimer = null;
+
+// Seite einfrieren (iOS sicherer Scroll Lock) und als Karte zurückweichen lassen
+function freezePage(on, instant) {
+  const page = $('page'), nav = $('nav'), bar = $('bottomBar'), html = document.documentElement;
+  if (on) {
+    if (_frozen) {               // Schließen lief noch: einfach wieder zurückweichen
+      clearTimeout(_unfreezeTimer);
+      html.classList.add('sheet-open');
+      if (_frozen.clip) { page.style.clipPath = page.style.webkitClipPath = _frozen.clip(14); page.classList.add('receded'); }
+      return;
+    }
+    const y = window.scrollY, vh = window.innerHeight;
+    const safeTop = $('safeProbe').offsetHeight;
+    const barTop = bar.getBoundingClientRect().top;
+    page.style.position = 'fixed'; page.style.top = -y + 'px'; page.style.left = '0'; page.style.right = '0';
+    nav.style.position = 'absolute'; nav.style.top = y + 'px';
+    bar.style.position = 'absolute'; bar.style.top = (y + barTop) + 'px'; bar.style.bottom = 'auto';
+    html.classList.add('sheet-open');
+    _frozen = { y, clip: null };
+    syncThemeColor();
+    if (reduceMotion()) return;
+    const h = page.offsetHeight;
+    _frozen.clip = r => `inset(${y}px 0 ${Math.max(0, h - y - vh)}px 0 round ${r}px)`;
+    page.style.transformOrigin = `50% ${y + safeTop}px`;
+    page.style.clipPath = page.style.webkitClipPath = _frozen.clip(0);
+    void page.offsetWidth;
+    page.style.clipPath = page.style.webkitClipPath = _frozen.clip(14);
+    page.classList.add('receded');
+  } else {
+    if (!_frozen) return;
+    const { y } = _frozen;
+    page.classList.remove('receded');
+    if (_frozen.clip) page.style.clipPath = page.style.webkitClipPath = _frozen.clip(0);
+    const done = () => {
+      _frozen = null;
+      ['position', 'top', 'left', 'right', 'transformOrigin', 'clipPath', 'webkitClipPath'].forEach(p => page.style[p] = '');
+      nav.style.position = ''; nav.style.top = '';
+      bar.style.position = ''; bar.style.top = ''; bar.style.bottom = '';
+      html.classList.remove('sheet-open');
+      syncThemeColor();
+      window.scrollTo(0, y);
+      onScroll();
+    };
+    clearTimeout(_unfreezeTimer);
+    if (instant || reduceMotion()) done(); else _unfreezeTimer = setTimeout(done, 460);
+  }
+}
+
+function openSheet(id, view) {
+  if (_openSheet === id) return;
+  if (_openSheet) closeSheet(true);
+  closeCtx();
+  const sh = $(id);
+  setView(id, view || sh.querySelector('.sheet-view').dataset.view, false);
+  sh.querySelectorAll('.sheet-body').forEach(b => b.scrollTop = 0);
+  _openSheet = id;
+  freezePage(true);
+  sh.style.transform = '';
+  $('sheetBackdrop').classList.add('open');
+  sh.classList.add('open');
+  sh.setAttribute('aria-hidden', 'false');
+}
+function closeSheet(instant) {
+  const id = _openSheet;
+  if (!id) return;
+  const sh = $(id);
+  _openSheet = null;
+  if (document.activeElement && sh.contains(document.activeElement)) document.activeElement.blur();
+  sh.classList.remove('dragging');
+  sh.style.transform = '';
+  sh.classList.remove('open');
+  sh.setAttribute('aria-hidden', 'true');
+  $('sheetBackdrop').classList.remove('open');
+  freezePage(false, instant);
+  if (id === 'sheet-close') { _venueToken++; destroyVenueMap(); }
+  if (id === 'sheet-settings') _editPresetId = null;
+}
+// Ansichten innerhalb eines Sheets (wie ein iOS Navigation Stack)
+function setView(sheetId, view, animate = true) {
+  const views = [...$(sheetId).querySelectorAll('.sheet-view')];
+  const idx = views.findIndex(v => v.dataset.view === view);
+  views.forEach((v, i) => {
+    if (!animate || reduceMotion()) v.style.transition = 'none';
+    v.classList.toggle('is-left', i < idx);
+    v.classList.toggle('is-right', i > idx);
+    v.setAttribute('aria-hidden', i === idx ? 'false' : 'true');
+    if (!animate || reduceMotion()) { void v.offsetWidth; v.style.transition = ''; }
   });
 }
-function totalGrand()    { return totalSubtotal() + totalTip(); }
-
-// ── Drawer ────────────────────────────────────────────────────────────────────
-function openDrawer() {
-  renderPresetList();
-  renderHistory();
-  document.getElementById('drawerBg').classList.add('open');
-}
-function closeDrawer(e) {
-  if (e && e.target !== document.getElementById('drawerBg')) return;
-  document.getElementById('drawerBg').classList.remove('open');
-  // Beim Schließen alle Accordion-Sektionen wieder einklappen, damit das Menü
-  // beim nächsten Öffnen immer im gleichen, übersichtlichen Ausgangszustand ist.
-  closeAccordion('settingsBody', 'settingsChevron');
-  if (closeAccordion('presetWrap', 'presetChevron')) { _editPresetId = null; }
-  closeAccordion('verlaufWrap', 'verlaufChevron');
+function activeView(sheetId) {
+  const v = [...$(sheetId).querySelectorAll('.sheet-view')].find(x => !x.classList.contains('is-left') && !x.classList.contains('is-right'));
+  return v ? v.dataset.view : null;
 }
 
-// ── Screen nav (kept for saveEvening redirect) ────────────────────────────────
+// Nach unten wischen schließt das Sheet (am Griff, an der Kopfzeile oder ganz oben im Inhalt)
+function initSheetDrag(sh) {
+  let y0 = 0, t0 = 0, dy = 0, active = false, body = null;
+  sh.addEventListener('touchstart', e => {
+    active = false; body = null; dy = 0;
+    if (!sh.classList.contains('open') || e.touches.length > 1) return;
+    if (e.target.closest('input, .seg, #venueMap')) return;
+    y0 = e.touches[0].clientY; t0 = performance.now();
+    if (e.target.closest('.sheet-head, .sheet-grabber')) active = true;
+    else body = e.target.closest('.sheet-body');
+  }, { passive: true });
+  sh.addEventListener('touchmove', e => {
+    if (!active && !body) return;
+    const d = e.touches[0].clientY - y0;
+    if (!active) {
+      if (body.scrollTop > 0 || d < -4) { body = null; return; }
+      if (d <= 6) return;
+      active = true; y0 = e.touches[0].clientY; t0 = performance.now();
+    }
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    if (e.cancelable) e.preventDefault();
+    sh.classList.add('dragging');
+    sh.style.transform = `translateY(${dy}px)`;
+  }, { passive: false });
+  const end = () => {
+    if (!active) { body = null; return; }
+    active = false; body = null;
+    const v = dy / Math.max(1, performance.now() - t0);
+    sh.classList.remove('dragging');
+    if (dy > 140 || (dy > 40 && v > 0.5)) closeSheet();
+    else sh.style.transform = '';
+    dy = 0;
+  };
+  sh.addEventListener('touchend', end);
+  sh.addEventListener('touchcancel', end);
+}
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
-function openModal(id) {
-  if (id === 'modal-settings') {
-    document.getElementById('m-tip').value = tipPct;
-    syncTipChips();
+// iOS öffnet die Tastatur nur, wenn der Fokus direkt im Fingertipp passiert. Darum sofort
+// ein unsichtbares Hilfsfeld fokussieren und nach der Animation auf das echte Feld wechseln.
+function focusSoon(el, select) {
+  const tmp = document.createElement('input');
+  tmp.setAttribute('aria-hidden', 'true');
+  tmp.tabIndex = -1;
+  tmp.style.cssText = 'position:fixed;top:35%;left:0;width:1px;height:1px;opacity:0;font-size:17px;border:0;padding:0';
+  document.body.appendChild(tmp);
+  tmp.focus({ preventScroll: true });
+  setTimeout(() => {
+    el.focus({ preventScroll: true });
+    if (select) try { el.setSelectionRange(0, el.value.length); } catch (e) {}
+    tmp.remove();
+  }, reduceMotion() ? 30 : 470);
+}
+
+// ════════════════ Segmented Control ════════════════
+function renderSeg(el, options, value, onPick) {
+  const idx = options.findIndex(o => o.v === value);
+  el.style.setProperty('--n', options.length);
+  el.innerHTML = `<div class="seg-thumb" style="transform:translateX(${Math.max(0, idx) * 100}%);${idx < 0 ? 'opacity:0' : ''}"></div>` +
+    options.map((o, k) => `<button type="button" role="radio" aria-checked="${k === idx}" class="${k === idx ? 'on' : ''}" data-k="${k}">${o.label}</button>`).join('');
+  el.onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const k = Number(b.dataset.k);
+    const th = el.querySelector('.seg-thumb');
+    th.style.opacity = '';
+    th.style.transform = `translateX(${k * 100}%)`;
+    el.querySelectorAll('button').forEach((x, j) => { x.classList.toggle('on', j === k); x.setAttribute('aria-checked', j === k); });
+    onPick(options[k].v);
+  };
+}
+function renderTipSeg() {
+  renderSeg($('tipSeg'), TIP_OPTIONS.map(v => ({ v, label: fmtPct(v) })), tipPct, v => {
+    tipPct = v; renderSummary(); save();
+  });
+}
+
+// ════════════════ Erscheinungsbild ════════════════
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+function themePref() {
+  let p = localStorage.getItem('drinks_theme');
+  if (!p) { const o = localStorage.getItem('drinks_dark'); p = o === '1' ? 'dark' : o === '0' ? 'light' : 'auto'; }
+  return ['auto', 'light', 'dark'].includes(p) ? p : 'auto';
+}
+function syncThemeColor() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.querySelector('meta[name="theme-color"]').content = (_frozen || dark) ? '#000000' : '#F2F2F7';
+}
+function applyTheme(animate) {
+  const p = themePref();
+  const dark = p === 'dark' || (p === 'auto' && darkQuery.matches);
+  const html = document.documentElement;
+  if (animate && !reduceMotion() && html.getAttribute('data-theme') !== (dark ? 'dark' : 'light')) {
+    html.classList.add('theme-switching');
+    setTimeout(() => html.classList.remove('theme-switching'), 420);
   }
-  document.getElementById(id).classList.add('open');
+  html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  syncThemeColor();
 }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// ── Trinkgeld-Anzeige ─────────────────────────────────────────────────────────
-function updatePill() {
-  document.getElementById('sumTipPct').textContent = tipPct.toFixed(0) + ' %';
+function setThemePref(p) {
+  localStorage.setItem('drinks_theme', p);
+  localStorage.removeItem('drinks_dark');
+  applyTheme(true);
 }
+darkQuery.addEventListener('change', () => { if (themePref() === 'auto') applyTheme(true); });
 
-// ── Brand Logo Database ───────────────────────────────────────────────────────
+// ════════════════ Marken und Logos ───────────────────────────────────────────────────────
 const BRAND_DB = [
   // ── Österreichische Biere ──
   { keys: ['gösser','gosser'],          domain: 'goesser.at',          emoji: '🍺', color: '#1a5c1a', logo: 'logos/goesser.png' },
@@ -724,6 +891,7 @@ const BRAND_DB = [
   { keys: ['wieselburger'],             domain: 'wieselburger.at',      emoji: '🍺', color: '#e8a020', logo: 'logos/wieselburger.png' },
   { keys: ['hirter'],                   domain: null,                   emoji: '🍺', color: '#2d6a1f', logo: 'logos/hirter.png' },
   { keys: ['murauer'],                  domain: null,                   emoji: '🍺', color: '#1a5fa8', logo: 'logos/murauer.png' },
+  { keys: ['kaiserspritzer','kaiser spritzer'], domain: null,          emoji: '🥂', color: '#d8c890' },
   { keys: ['kaiser'],                   domain: null,                   emoji: '🍺', color: '#c8a020', logo: 'logos/kaiser.png' },
   { keys: ['obertrummer'],              domain: null,                   emoji: '🍺', color: '#2d6a1f' },
   { keys: ['schwarz','schwarz bier'],   domain: null,                   emoji: '🍺', color: '#1a1a1a' },
@@ -744,7 +912,6 @@ const BRAND_DB = [
   { keys: ['starobrno'],                domain: null,                   emoji: '🍺', color: '#1a5c1a', logo: 'logos/starobrno.png' },
   { keys: ['kozel'],                    domain: null,                   emoji: '🍺', color: '#1a1a1a', logo: 'logos/kozel.png' },
   // ── Bayerische Biere ──
-  { keys: ['tegernseer'],               domain: 'tegernseer.de',        emoji: '🍺', color: '#1a5fa8' },
   { keys: ['paulaner'],                 domain: 'paulaner.de',          emoji: '🍺', color: '#1a5fa8' },
   { keys: ['erdinger'],                 domain: 'erdinger.de',          emoji: '🍺', color: '#1a5fa8' },
   { keys: ['augustiner'],               domain: 'augustiner-braeu.de',  emoji: '🍺', color: '#c8920a' },
@@ -796,152 +963,229 @@ const BRAND_DB = [
   { keys: ['espresso martini'],         domain: null,                   emoji: '🍸', color: '#3a2418', logo: 'logos/espresso_martini.png' },
   { keys: ['mojito'],                   domain: null,                   emoji: '🍹', color: '#7fc488', logo: 'logos/mojito.png' },
   { keys: ['spritz','spritzer'],        domain: null,                   emoji: '🍸', color: '#e85a10' },
-  { keys: ['bier','beer'],              domain: null,                   emoji: '🍺', color: '#c8920a' },
+  { keys: ['bier','beer','pils','märzen','helles','zwickl','radler','seiterl','krügerl','pfiff'], domain: null, emoji: '🍺', color: '#c8920a' },
+  // ── Generisch, daher ganz am Ende (spezifische Einträge oben gewinnen) ──
+  { keys: ['schnaps','shot','stamperl','obstler','vodka','wodka','whisky','whiskey','tequila','likör'], domain: null, emoji: '🥃', color: '#8a5a2a' },
+  { keys: ['almdudler','limo','eistee','saft','spezi','fanta','sprite','ginger'], domain: null, emoji: '🥤', color: '#e8a020' },
+  { keys: ['wasser','mineral','soda'],  domain: null,                   emoji: '💧', color: '#3a8fd8' },
+  { keys: ['kaffee','espresso','melange','cappuccino','verlängerter'], domain: null, emoji: '☕', color: '#6b4226' },
 ];
 
 function getBrandInfo(name) {
   const lower = name.toLowerCase().trim();
   for (const brand of BRAND_DB) {
     for (const key of brand.keys) {
-      if (lower.includes(key) || key.includes(lower)) return brand;
+      // nur vorwärts: der eingegebene Name muss den Schlüssel enthalten
+      // (rückwärts machte z.B. aus "Bier" das Schwarzbier und aus "Wein" den Rotwein)
+      if (lower.includes(key)) return brand;
     }
   }
   return null;
 }
 
-function logoHtml(name) {
-  const brand = getBrandInfo(name);
-  const emoji = brand ? brand.emoji : '🥃';
-  const color = brand ? brand.color : '#2e2e38';
-  // Eigene, lokal im Repo liegende Logos (zuverlässig, kein externer Dienst).
-  // Fallback: Emoji, falls kein lokales Logo für die Marke hinterlegt ist.
+// Monogramm für unbekannte Getränke, Farbe immer gleich je Name
+const MONO_COLORS = ['#007AFF', '#5856D6', '#AF52DE', '#D30F45', '#E5352B', '#C45200', '#248A3D', '#0E7C86', '#8B6A44', '#6C6C70'];
+function logoHtml(name, cls = '') {
+  const brand = getBrandInfo(name || '');
   if (brand && brand.logo) {
-    const id = 'logo-' + Math.random().toString(36).slice(2);
-    return `<div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
-      <img class="drink-logo-img" src="${brand.logo}" alt="${esc(name)}"
-        onerror="this.style.display='none';document.getElementById('${id}-fb').style.display='flex'">
-      <div id="${id}-fb" class="drink-logo-emoji-fb" style="display:none">${emoji}</div>
-    </div>`;
+    return `<div class="logo ${cls}"><img src="${brand.logo}" alt="" decoding="async" onerror="this.parentNode.textContent='${brand.emoji}'"></div>`;
   }
-  return `<div class="drink-logo-wrap" style="background:${color}18;border-color:${color}40">
-    <div class="drink-logo-emoji-fb">${emoji}</div>
-  </div>`;
+  if (brand) return `<div class="logo ${cls}">${brand.emoji}</div>`;
+  const n = String(name || '').trim();
+  const ch = n ? [...n][0].toUpperCase() : '';
+  let h = 0;
+  for (const c of n.toLowerCase()) h = (h * 31 + c.codePointAt(0)) >>> 0;
+  return `<div class="logo mono ${cls}" style="background:${MONO_COLORS[h % MONO_COLORS.length]}">${esc(ch)}</div>`;
 }
 
-// ── Drink Types ───────────────────────────────────────────────────────────────
-function addDrinkType() {
-  const nameEl  = document.getElementById('new-name');
-  const priceEl = document.getElementById('new-price');
-  const name  = nameEl.value.trim();
-  const rawPrice = (priceEl.value || '').trim();
-  let price = parseFloat((rawPrice || '0').replace(',', '.')) || 0;
-  if (price < 0) price = 0;
-  if (!name) { nameEl.focus(); return; }
-  // Doppelten Namen vermeiden: existiert das Getränk schon, nur Preis aktualisieren
-  const existing = drinkTypes.find(d => d.name.toLowerCase() === name.toLowerCase());
-  if (existing) {
-    if (rawPrice !== '') existing.price = price;
-    nameEl.value = '';
-    priceEl.value = '';
-    renderDrinkTypes();
-    renderSummary();
-    save();
-    return;
+// ════════════════ Hauptansicht ════════════════
+let _rendered = false;
+function drinkRowHtml(dt) {
+  return `<div class="drow-wrap" id="dcw-${dt.id}">` +
+    `<div class="swipe-bg add" id="dca-${dt.id}"><span>+1</span></div>` +
+    `<div class="swipe-bg sub" id="dcs-${dt.id}"><span>−1</span></div>` +
+    `<div class="drow" id="dc-${dt.id}" data-id="${dt.id}">` +
+      logoHtml(dt.name) +
+      `<div class="drow-info" onclick="onRowTap(${dt.id})" role="button" tabindex="0" aria-label="${esc(dt.name)} bearbeiten">` +
+        `<div class="drow-name">${esc(dt.name)}</div><div class="drow-price">${fmt(dt.price)}</div></div>` +
+      `<div class="drow-count num${dt.count ? '' : ' zero'}" id="dc-count-${dt.id}">${dt.count}</div>` +
+      `<div class="add-btn${dt.cooldown ? ' disabled' : ''}" id="dc-btn-${dt.id}" role="button" tabindex="0" aria-label="1 ${esc(dt.name)} dazu" onclick="addOne(${dt.id})">` +
+        `<svg class="ring" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="27" id="dc-circ-${dt.id}"/></svg>` +
+        icon('plus') +
+        `<input type="checkbox" switch class="hx" tabindex="-1" aria-hidden="true"${dt.cooldown ? ' disabled' : ''}>` +
+      `</div></div></div>`;
+}
+function renderDrinkTypes() {
+  const wrap = $('drinkTypes');
+  const canAnim = _rendered && !reduceMotion();
+  const flip = canAnim && !_frozen;          // bei offenem Sheet nicht messen (Seite ist eingefroren)
+  const before = {};
+  wrap.querySelectorAll('.drow-wrap').forEach(el => { before[el.id] = flip ? el.getBoundingClientRect().top : 0; });
+  wrap.innerHTML = drinkTypes.map(drinkRowHtml).join('');
+  initRowGestures();
+  if (canAnim) {
+    wrap.querySelectorAll('.drow-wrap').forEach(el => {
+      const old = before[el.id];
+      if (old === undefined) { el.classList.add('row-enter'); return; }   // neue Zeile
+      if (!flip) return;
+      const dy = old - el.getBoundingClientRect().top;
+      if (!dy) return;
+      el.style.transition = 'none';
+      el.style.transform = `translateY(${dy}px)`;
+      requestAnimationFrame(() => {
+        el.style.transition = 'transform .4s var(--ease)';
+        el.style.transform = '';
+      });
+    });
   }
-  drinkTypes.push({ id: uid(), name, price, count: 0, cooldown: false, timer: null });
-  nameEl.value = '';
-  priceEl.value = '';
-  renderDrinkTypes();
-  save();
+  _rendered = true;
+  const hint = $('drinkHint');
+  if (drinkTypes.length) hint.textContent = 'Antippen zum Bearbeiten. Nach rechts wischen für +1, nach links für −1, lange drücken für mehr.';
+  else if (!locationPresets.length) hint.textContent = 'Füge dein erstes Getränk hinzu. Beim Abschließen merkt sich die App Ort und Preise.';
+  else hint.textContent = '';
+  $('sumSection').hidden = drinkTypes.length === 0;
+  renderPresetQuick();
+}
+function setCount(dt) {
+  const el = $('dc-count-' + dt.id);
+  if (!el) return;
+  el.textContent = dt.count;
+  el.classList.toggle('zero', dt.count === 0);
+  if (reduceMotion()) return;
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+}
+function setStat(id, val) {
+  const el = $(id);
+  if (!el || el.textContent === val) return;
+  el.textContent = val;
+  if (reduceMotion()) return;
+  el.classList.remove('val-bump'); void el.offsetWidth; el.classList.add('val-bump');
+}
+// Schrift so weit verkleinern, bis der Text in seine Box passt (z.B. große Beträge am iPhone SE)
+function fitText(el, max, min) {
+  if (!el) return;
+  el.style.fontSize = '';
+  let size = max;
+  while (size > min && el.scrollWidth > el.clientWidth + 0.5) { size -= 1; el.style.fontSize = size + 'px'; }
+}
+function renderSummary() {
+  setStat('sumCount', String(totalCount()));
+  setStat('sumSubtotal', fmt(totalSubtotal()));
+  setStat('sumTip', fmt(totalTip()));
+  setStat('sumTotal', fmt(totalGrand()));
+  setStat('barTotal', fmt(totalGrand()));
+  fitText($('barTotal'), 24, 16);
+  $('sumTipLabel').textContent = `Trinkgeld (${fmtPct(tipPct)})`;
+  const show = totalCount() > 0;
+  const bar = $('bottomBar');
+  bar.classList.toggle('show', show);
+  bar.setAttribute('aria-hidden', show ? 'false' : 'true');
 }
 
-let _priceEditId = null;
-function editPrice(id) {
-  const dt = drinkTypes.find(d => d.id === id);
-  if (!dt) return;
-  _priceEditId = id;
-  document.getElementById('priceDrinkName').textContent = dt.name;
-  const inp = document.getElementById('m-price');
-  inp.value = dt.price ? String(dt.price).replace('.', ',') : '';
-  openModal('modal-price');
-  inp.focus();
-  inp.select();
+let _evtShowAll = false;
+let _evtLastLen = 0;
+function renderEventLog() {
+  renderPace();
+  const sec = $('evtSection'), list = $('evtList');
+  if (!eventLog.length) { sec.hidden = true; list.innerHTML = ''; _evtLastLen = 0; return; }
+  sec.hidden = false;
+  const isNew = eventLog.length > _evtLastLen;
+  _evtLastLen = eventLog.length;
+  const items = [...eventLog].reverse();
+  const shown = _evtShowAll ? items : items.slice(0, EVT_LIMIT);
+  let html = shown.map((e, i) =>
+    `<div class="row evt${isNew && i === 0 ? ' evt-new' : ''}"><span class="evt-num num">${eventLog.length - i}</span>` +
+    `<span class="evt-name">${esc(e.typeName)}</span><span class="evt-time num">${timeStr(e.time)}</span></div>`).join('');
+  if (items.length > EVT_LIMIT) {
+    html += `<button class="row tappable action-left" onclick="_evtShowAll=!_evtShowAll;renderEventLog()">${_evtShowAll ? 'Weniger anzeigen' : `Alle ${items.length} anzeigen`}</button>`;
+  }
+  list.innerHTML = html;
 }
-function savePrice() {
-  const dt = drinkTypes.find(d => d.id === _priceEditId);
-  if (!dt) { closeModal('modal-price'); return; }
-  const raw = document.getElementById('m-price').value.trim();
-  const v = parseFloat(raw.replace(',', '.'));
-  if (isNaN(v) || v < 0) { document.getElementById('m-price').focus(); return; }
-  dt.price = v;
-  closeModal('modal-price');
-  _priceEditId = null;
+function renderPace() {
+  const el = $('paceLine');
+  if (!eventLog.length) { el.textContent = ''; return; }
+  const last = eventLog[eventLog.length - 1].time;
+  const mins = Math.floor((Date.now() - last.getTime()) / 60000);
+  let ago;
+  if (mins < 1) ago = 'gerade eben';
+  else if (mins < 60) ago = `vor ${mins} Min.`;
+  else if (mins < 1440) ago = `vor ${Math.floor(mins / 60)} Std.${mins % 60 ? ` ${mins % 60} Min.` : ''}`;
+  else { const d = Math.floor(mins / 1440); ago = `vor ${d} Tag${d === 1 ? '' : 'en'}`; }
+  let txt = `Letzter Drink ${ago}`;
+  if (eventLog.length >= 2) {
+    const avg = Math.round((last - eventLog[0].time) / 60000 / (eventLog.length - 1));
+    if (avg > 0) txt += ` · im Schnitt alle ${avg} Min.`;
+  }
+  el.textContent = txt;
+}
+setInterval(renderPace, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) renderPace(); });
+
+function renderPresetQuick() {
+  const show = drinkTypes.length === 0 && locationPresets.length > 0;
+  $('presetQuick').hidden = !show;
+  if (!show) return;
+  $('presetQuickList').innerHTML = locationPresets.map(p =>
+    `<button class="row tappable" style="--inset:58px" onclick="loadPreset(${p.id})">` +
+    `<span class="row-ic ic-red">${icon('pin')}</span>` +
+    `<span class="row-main"><span class="row-title">${esc(p.name || 'Ohne Namen')}</span><span class="row-sub">${drinkCountLabel(p.drinks.length)}</span></span>` +
+    `<span class="row-link">Laden</span></button>`).join('');
+}
+function renderAll() {
   renderDrinkTypes();
   renderSummary();
-  save();
-  toast('Preis aktualisiert');
+  renderEventLog();
 }
 
-function removeDrinkType(id) {
-  const dt = drinkTypes.find(d => d.id === id);
-  if (!dt) return;
-  const doRemove = () => {
-    if (dt.timer) clearTimeout(dt.timer);
-    drinkTypes = drinkTypes.filter(d => d.id !== id);
-    eventLog   = eventLog.filter(e => e.typeId !== id);
-    renderDrinkTypes();
-    renderSummary();
-    renderEventLog();
-    save();
-  };
-  const hasData = dt.count > 0 || eventLog.some(e => e.typeId === id);
-  if (!hasData) { doRemove(); return; }
-  askConfirm(`„${dt.name}“ entfernen?`,
-    'Die zugehörigen Einträge im Bestellverlauf werden mitgelöscht.',
-    'Entfernen', doRemove);
-}
-
+// ════════════════ Getränke zählen ════════════════
 function addOne(id) {
   const dt = drinkTypes.find(d => d.id === id);
   if (!dt || dt.cooldown) return;
-
   dt.count++;
   eventLog.push({ typeId: id, typeName: dt.name, price: dt.price, time: new Date() });
-  haptic('light');
-
-  // update + bump animation
-  const countEl = document.getElementById('dc-count-' + id);
-  if (countEl) {
-    countEl.textContent = dt.count;
-    countEl.classList.remove('bump');
-    void countEl.offsetWidth;
-    countEl.classList.add('bump');
-    setTimeout(() => countEl.classList.remove('bump'), 200);
-  }
-
-  // cooldown mit SVG-Ring
-  dt.cooldown = true;
-  const btn  = document.getElementById('dc-btn-' + id);
-  const circ = document.getElementById('dc-circ-' + id);
-  if (btn)  { btn.disabled = true; btn.classList.remove('cooling-sub'); btn.classList.add('cooling'); }
-  startRing(circ, COOLDOWN, () => {
-    dt.cooldown = false;
-    if (btn) { btn.disabled = false; btn.classList.remove('cooling'); }
-    if (!drinkTypes.some(d => d.cooldown)) renderDrinkTypes();
-  });
-  if (dt.timer) clearTimeout(dt.timer);
-  dt.timer = setTimeout(() => { dt.cooldown = false; if (btn) { btn.disabled = false; btn.classList.remove('cooling'); } }, COOLDOWN);
-
+  setCount(dt);
+  startCooldown(dt, false);
   renderSummary();
   renderEventLog();
   save();
 }
-
-// ── Ring-Hilfsfunktion (grün oder rot, je nach Klasse am Button) ─────────────
+function subOne(id) {
+  const dt = drinkTypes.find(d => d.id === id);
+  if (!dt || dt.count <= 0 || dt.cooldown) return false;
+  dt.count--;
+  for (let i = eventLog.length - 1; i >= 0; i--) {
+    if (eventLog[i].typeId === id) { eventLog.splice(i, 1); break; }
+  }
+  setCount(dt);
+  startCooldown(dt, true);
+  renderSummary();
+  renderEventLog();
+  save();
+  return true;
+}
+function setBtnState(btn, cooling, sub) {
+  if (!btn) return;
+  btn.classList.toggle('disabled', cooling);
+  btn.classList.toggle('cooling', cooling && !sub);
+  btn.classList.toggle('cooling-sub', cooling && !!sub);
+  btn.setAttribute('aria-disabled', cooling ? 'true' : 'false');
+  const hx = btn.querySelector('.hx');
+  if (hx) hx.disabled = cooling;
+}
+function startCooldown(dt, sub) {
+  dt.cooldown = true;
+  setBtnState($('dc-btn-' + dt.id), true, sub);
+  if (dt.timer) clearTimeout(dt.timer);
+  dt.timer = startRing($('dc-circ-' + dt.id), COOLDOWN, () => {
+    dt.timer = null;
+    dt.cooldown = false;
+    setBtnState($('dc-btn-' + dt.id), false);   // frisch nachschlagen, die Zeile kann neu gezeichnet worden sein
+  }, sub);
+}
+// Fortschrittsring um den Plus Button; liefert die Timer ID zurück
 function startRing(circ, duration, onDone, reverse) {
-  if (!circ) return;
-  const r = 26, full = 2 * Math.PI * r;
-  // Richtung: bei reverse den Ring spiegeln, damit er gegenläufig abläuft
+  if (!circ) return setTimeout(() => { if (onDone) onDone(); }, duration);
+  const full = 2 * Math.PI * circ.r.baseVal.value;
   circ.style.transform = reverse ? 'scaleX(-1)' : '';
   circ.style.transformOrigin = 'center';
   circ.style.transition = 'none';
@@ -950,7 +1194,7 @@ function startRing(circ, duration, onDone, reverse) {
   void circ.getBoundingClientRect();
   circ.style.transition = `stroke-dasharray ${duration}ms linear`;
   circ.style.strokeDasharray = '0 999';
-  setTimeout(() => {
+  return setTimeout(() => {
     circ.style.transition = 'none';
     circ.style.opacity = '0';
     circ.style.strokeDasharray = '0 999';
@@ -959,129 +1203,256 @@ function startRing(circ, duration, onDone, reverse) {
   }, duration);
 }
 
-function renderDrinkTypes() {
-  const wrap = document.getElementById('drinkTypes');
-  const anim = !reduceMotion();
-  // Positionen vor dem Neuaufbau merken, damit die Karten danach an ihre
-  // neue Stelle gleiten statt hart zu springen.
-  const before = {};
-  if (anim) wrap.querySelectorAll('.drink-card-wrap').forEach(el => {
-    before[el.id] = el.getBoundingClientRect().top;
+// ════════════════ Wischen und lange drücken ════════════════
+let _suppressTap = false;
+let _suppressTimer = null;
+function suppressTapBriefly() {
+  _suppressTap = true;
+  clearTimeout(_suppressTimer);
+  _suppressTimer = setTimeout(() => { _suppressTap = false; }, 450);
+}
+function onRowTap(id) {
+  if (_suppressTap) return;
+  openDrinkSheet(id);
+}
+function initRowGestures() {
+  document.querySelectorAll('#drinkTypes .drow').forEach(row => {
+    const id = Number(row.dataset.id);
+    const SNAP = 72, DAMP = 0.3;
+    let sx = 0, sy = 0, cx = 0, decided = false, horiz = false, snapped = false, lpTimer = null, lpFired = false;
+    const hintAdd = () => $('dca-' + id), hintSub = () => $('dcs-' + id);
+    const reset = () => {
+      row.classList.remove('dragging');
+      row.style.transform = '';
+      const a = hintAdd(), s = hintSub();
+      if (a) a.style.opacity = 0;
+      if (s) s.style.opacity = 0;
+      cx = 0; snapped = false;
+    };
+    row.addEventListener('touchstart', e => {
+      if (e.touches.length > 1) return;
+      const t = e.touches[0];
+      sx = t.clientX; sy = t.clientY; cx = 0;
+      decided = false; horiz = false; snapped = false; lpFired = false;
+      clearTimeout(lpTimer);
+      if (!e.target.closest('.add-btn')) {
+        lpTimer = setTimeout(() => { lpFired = true; suppressTapBriefly(); reset(); openCtx(id); }, 480);
+      }
+    }, { passive: true });
+    row.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearTimeout(lpTimer);
+      if (lpFired) { if (e.cancelable) e.preventDefault(); return; }
+      if (!decided) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        decided = true;
+        horiz = Math.abs(dx) > Math.abs(dy) * 1.1;
+        if (horiz) row.classList.add('dragging');
+      }
+      if (!horiz) return;
+      if (e.cancelable) e.preventDefault();
+      const sign = dx > 0 ? 1 : -1, abs = Math.abs(dx);
+      cx = sign * (abs <= SNAP ? abs : SNAP + (abs - SNAP) * DAMP);
+      row.style.transform = `translateX(${cx}px)`;
+      const a = hintAdd(), s = hintSub(), prog = Math.min(1, Math.abs(cx) / SNAP);
+      if (cx > 0) { a.style.opacity = prog; s.style.opacity = 0; }
+      else        { s.style.opacity = prog; a.style.opacity = 0; }
+      if (!snapped && Math.abs(cx) >= SNAP) {
+        snapped = true;
+        const h = cx > 0 ? a : s;
+        h.classList.remove('snapped'); void h.offsetWidth; h.classList.add('snapped');
+      }
+      if (snapped && Math.abs(cx) < SNAP * 0.65) snapped = false;
+    }, { passive: false });
+    const end = (cancel, e) => {
+      clearTimeout(lpTimer);
+      if (lpFired) {
+        // Loslassen nach dem langen Drücken erzeugt sonst einen Klick, der das Menü gleich wieder schließt
+        lpFired = false;
+        _ctxOpenedAt = performance.now();
+        if (e && e.cancelable) e.preventDefault();
+        suppressTapBriefly();
+        return;
+      }
+      if (!cancel && horiz && snapped) { if (cx > 0) addOne(id); else subOne(id); }
+      if (horiz) suppressTapBriefly();
+      reset();
+    };
+    row.addEventListener('touchend', e => end(false, e));
+    row.addEventListener('touchcancel', () => end(true));
+    row.addEventListener('contextmenu', e => e.preventDefault());
   });
-  if (drinkTypes.length === 0) {
-    wrap.innerHTML = '';
+}
+
+// Kontextmenü wie in iOS: Zeile hebt sich ab, Menü darunter
+function openCtx(id) {
+  const row = $('dc-' + id), dt = drinkTypes.find(d => d.id === id);
+  if (!row || !dt) return;
+  const r = row.getBoundingClientRect();
+  const pv = $('ctxPreview');
+  const clone = row.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  clone.style.transform = '';
+  clone.classList.remove('dragging');
+  pv.innerHTML = '';
+  pv.appendChild(clone);
+  Object.assign(pv.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  const items = [
+    { label: 'Bearbeiten', ic: 'pencil', fn: () => openDrinkSheet(id) },
+    dt.count > 0 && !dt.cooldown ? { label: '1 abziehen', ic: 'minus', fn: () => subOne(id) } : null,
+    { label: 'Entfernen', ic: 'trash', danger: true, fn: () => removeDrinkType(id) },
+  ].filter(Boolean);
+  const menu = $('ctxMenu');
+  menu.innerHTML = items.map((it, k) =>
+    `<button class="ctx-item${it.danger ? ' destructive' : ''}" role="menuitem" data-k="${k}"><span>${it.label}</span>${icon(it.ic)}</button>`).join('');
+  menu.onclick = e => {
+    const b = e.target.closest('.ctx-item');
+    if (!b) return;
+    e.stopPropagation();
+    closeCtx();
+    items[Number(b.dataset.k)].fn();
+  };
+  const mh = items.length * 44.5, mw = 250, vh = window.innerHeight, vw = window.innerWidth;
+  let top = r.bottom + 12, origin = 'top';
+  if (top + mh > vh - 16) { top = Math.max(16, r.top - 12 - mh); origin = 'bottom'; }
+  const left = Math.min(Math.max(16, r.left + 8), vw - mw - 16);
+  Object.assign(menu.style, { top: top + 'px', left: left + 'px', transformOrigin: `${origin} left` });
+  _ctxOpenedAt = performance.now();
+  $('ctx').classList.add('open');
+}
+let _ctxOpenedAt = 0;
+function ctxBackdropTap(e) {
+  if (e.target !== $('ctx')) return;
+  if (performance.now() - _ctxOpenedAt < 300) return;   // Nachklick vom Loslassen ignorieren
+  closeCtx();
+}
+function closeCtx() { $('ctx').classList.remove('open'); }
+
+// ════════════════ Getränk hinzufügen / bearbeiten ════════════════
+let _editId = null;   // null = neues Getränk
+function openDrinkSheet(id) {
+  const dt = id != null ? drinkTypes.find(d => d.id === id) : null;
+  _editId = dt ? dt.id : null;
+  $('drinkSheetTitle').textContent = dt ? 'Getränk bearbeiten' : 'Neues Getränk';
+  $('drinkSaveBtn').textContent = dt ? 'Speichern' : 'Hinzufügen';
+  $('m-name').value = dt ? dt.name : '';
+  $('m-price').value = dt && dt.price ? dt.price.toFixed(2).replace('.', ',') : '';
+  $('drinkDeleteGroup').hidden = !dt;
+  $('drinkFooter').hidden = !!dt;
+  updateDrinkHero();
+  openSheet('sheet-drink');
+  focusSoon(dt ? $('m-price') : $('m-name'), !!dt);
+}
+function updateDrinkHero() {
+  $('drinkHero').innerHTML = logoHtml($('m-name').value.trim(), '');
+}
+function saveDrink() {
+  const nameEl = $('m-name');
+  const name = nameEl.value.trim();
+  if (!name) { toast('Bitte einen Namen eingeben', 'info'); nameEl.focus(); return; }
+  const raw = $('m-price').value.trim();
+  const v = raw === '' ? 0 : parseFloat(raw.replace(',', '.'));
+  if (isNaN(v) || v < 0) { toast('Bitte einen gültigen Preis eingeben', 'info'); $('m-price').focus(); return; }
+  const dup = drinkTypes.find(d => d.id !== _editId && d.name.toLowerCase() === name.toLowerCase());
+  if (_editId == null) {
+    if (dup) {   // gibt es schon: wie bisher nur den Preis aktualisieren
+      if (raw !== '') dup.price = v;
+      closeSheet(); renderDrinkTypes(); renderSummary(); save();
+      toast(`${dup.name}: Preis aktualisiert`);
+      return;
+    }
+    drinkTypes.push({ id: uid(), name, price: v, count: 0, cooldown: false, timer: null });
+    closeSheet(); renderDrinkTypes(); save();
+    toast(`${name} hinzugefügt`);
     return;
   }
-  const sorted = [...drinkTypes].sort((a, b) => b.count - a.count);
-  wrap.innerHTML = sorted.map(dt => `
-    <div class="drink-card-wrap" id="dcw-${dt.id}">
-      <div class="drink-card-hint-add" id="dca-${dt.id}">+1 &nbsp;✓</div>
-      <div class="drink-card-hint-sub" id="dcs-${dt.id}">−1 &nbsp;↩</div>
-      <div class="drink-card" id="dc-${dt.id}">
-        ${logoHtml(dt.name)}
-        <div class="drink-card-info">
-          <div class="drink-card-name">${esc(dt.name)}</div>
-          <div class="drink-card-price" style="cursor:pointer;" onclick="event.stopPropagation();editPrice(${dt.id})">${fmt(dt.price)} / Stück <span style="opacity:.45">✎</span></div>
-        </div>
-        <div class="drink-count" id="dc-count-${dt.id}">${dt.count}</div>
-        <button class="drink-add-btn${dt.cooldown?' cooling':''}" id="dc-btn-${dt.id}" onclick="addOne(${dt.id})" ${dt.cooldown?'disabled':''}>
-          <svg class="cooldown-ring" viewBox="0 0 60 60" id="dc-ring-${dt.id}">
-            <circle cx="30" cy="30" r="26" id="dc-circ-${dt.id}"/>
-          </svg>
-          <span style="position:relative;z-index:1">+</span>
-        </button>
-        <button onclick="removeDrinkType(${dt.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:12px 4px 12px 12px;margin:-12px -4px -12px 0;line-height:1;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>
-      </div>
-    </div>`).join('');
-  initSwipe();
-  if (!anim) return;
-  wrap.querySelectorAll('.drink-card-wrap').forEach(el => {
-    const old = before[el.id];
-    if (old === undefined) { el.classList.add('card-enter'); return; }   // neue Karte
-    const dy = old - el.getBoundingClientRect().top;
-    if (!dy) return;
-    el.style.transition = 'none';
-    el.style.transform  = 'translateY(' + dy + 'px)';
-    requestAnimationFrame(() => {
-      el.style.transition = 'transform .4s cubic-bezier(.32,.72,0,1)';
-      el.style.transform  = '';
-    });
-  });
+  if (dup) { toast('Dieses Getränk gibt es schon', 'info'); nameEl.focus(); return; }
+  const dt = drinkTypes.find(d => d.id === _editId);
+  if (!dt) { closeSheet(); return; }
+  const renamed = name !== dt.name;
+  dt.name = name;
+  dt.price = v;
+  if (renamed) eventLog.forEach(e => { if (e.typeId === dt.id) e.typeName = name; });
+  closeSheet(); renderDrinkTypes(); renderSummary();
+  if (renamed) renderEventLog();
+  save();
+  toast('Gespeichert');
+}
+function removeFromEditor() {
+  const id = _editId;
+  if (id == null) return;
+  closeSheet();
+  removeDrinkType(id);
+}
+function removeDrinkType(id) {
+  const dt = drinkTypes.find(d => d.id === id);
+  if (!dt) return;
+  const doRemove = () => {
+    if (dt.timer) clearTimeout(dt.timer);
+    drinkTypes = drinkTypes.filter(d => d.id !== id);
+    eventLog = eventLog.filter(e => e.typeId !== id);
+    renderAll();
+    save();
+  };
+  const hasData = dt.count > 0 || eventLog.some(e => e.typeId === id);
+  if (!hasData) { doRemove(); return; }
+  askConfirm(`„${dt.name}“ entfernen?`, 'Die zugehörigen Einträge im Bestellverlauf werden mitgelöscht.', 'Entfernen', doRemove);
 }
 
-// ── Summary ───────────────────────────────────────────────────────────────────
-function setStat(id, val) {
-  const el = document.getElementById(id);
-  if (!el || el.textContent === val) return;
-  el.textContent = val;
-  if (reduceMotion()) return;
-  el.classList.remove('val-bump');
-  void el.offsetWidth;
-  el.classList.add('val-bump');
-}
-function renderSummary() {
-  setStat('sumCount',    String(totalCount()));
-  setStat('sumSubtotal', fmt(totalSubtotal()));
-  setStat('sumTip',      fmt(totalTip()));
-  setStat('sumTotal',    fmt(totalGrand()));
-}
-
-// ── Event Log ─────────────────────────────────────────────────────────────────
-let _evtShowAll = false;
-let _evtLastLen = 0;
-function renderEventLog() {
-  renderPace();
-  const el       = document.getElementById('evtList');
-  const card     = document.getElementById('evtCard');
-  const btnClose = document.getElementById('btnCloseEvening');
-  const hasItems = eventLog.length > 0;
-  if (card)     card.style.display     = hasItems ? 'block' : 'none';
-  if (btnClose) btnClose.style.display = hasItems ? 'block' : 'none';
-  if (!hasItems) { el.innerHTML = ''; return; }
-  const LIMIT = 50;
-  const isNew = eventLog.length > _evtLastLen;
-  _evtLastLen = eventLog.length;
-  const items = [...eventLog].reverse();
-  const shown = _evtShowAll ? items : items.slice(0, LIMIT);
-  let html = shown.map((e, i) => `
-    <div class="evt-item${isNew && i === 0 ? ' evt-new' : ''}">
-      <div class="evt-dot"></div>
-      <div class="evt-num">#${eventLog.length - i}</div>
-      <div class="evt-name">${esc(e.typeName)}</div>
-      <div class="evt-time">${timeStr(e.time)}</div>
-    </div>`).join('');
-  if (!_evtShowAll && items.length > LIMIT) {
-    html += `<button style="width:100%;height:36px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;cursor:pointer;" onclick="_evtShowAll=true;renderEventLog()">Alle ${eventLog.length} anzeigen</button>`;
+// ════════════════ Abend abschließen ════════════════
+let _recentLocs = [];
+function recentLocations() {
+  const seen = locationPresets.map(p => p.name).filter(n => String(n || '').trim());
+  for (const h of history) {
+    const l = (h.location || '').trim();
+    if (l && l !== 'Unbekannt' && !seen.some(s => s.toLowerCase() === l.toLowerCase())) seen.push(l);
   }
-  el.innerHTML = html;
+  return seen.slice(0, 6);
 }
-
-// ── Close Evening ─────────────────────────────────────────────────────────────
-function showGpsNote(msg) {
-  const gn = document.getElementById('gpsNote');
-  if (gn) { gn.textContent = '📡 ' + msg; gn.style.display = 'block'; }
+function openCloseEveningFlow() {
+  if (totalCount() === 0) { toast('Noch keine Getränke bestellt', 'info'); return; }
+  renderCloseSheet();
+  openSheet('sheet-close', 'main');
+  if (gpsEnabled && 'geolocation' in navigator) {
+    setView('sheet-close', 'venues', false);
+    startVenueSearch();
+  }
 }
-function openCloseEvening() {
-  if (totalCount() === 0) { toast('Noch keine Getränke bestellt'); return; }
-  const el = document.getElementById('closeSummary');
-  let rows = drinkTypes.filter(d => d.count > 0).map(d =>
-    `<div class="close-row"><span class="close-row-label">${esc(d.name)}</span><span class="close-row-val gold">${d.count}× ${fmt(d.price)}</span></div>`).join('');
-  rows += `<div class="close-row" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
-    <span class="close-row-label">Subtotal</span><span class="close-row-val">${fmt(totalSubtotal())}</span></div>
-  <div class="close-row"><span class="close-row-label">Trinkgeld (${tipPct}%)</span><span class="close-row-val">${fmt(totalTip())}</span></div>
-  <div class="close-row"><span class="close-row-label" style="color:var(--text);font-weight:500">Gesamt</span><span class="close-row-val green">${fmt(totalGrand())}</span></div>`;
-  el.innerHTML = rows;
-  document.getElementById('m-location').value = '';
-  const gn = document.getElementById('gpsNote'); if (gn) gn.style.display = 'none';
+function renderCloseSheet() {
+  $('m-location').value = '';
+  $('gpsNote').hidden = true;
+  $('nearbyRow').hidden = !('geolocation' in navigator);
   _recentLocs = recentLocations();
-  document.getElementById('locChips').innerHTML = _recentLocs.map((l, i) =>
-    `<button class="chip" onclick="pickLocation(${i})">📍 ${esc(l)}</button>`).join('');
+  $('locRecent').innerHTML = _recentLocs.map((l, i) =>
+    `<button class="row tappable" style="--inset:58px" onclick="pickLocation(${i})"><span class="row-ic ic-gray">${icon('pin')}</span>` +
+    `<span class="row-label">${esc(l)}</span></button>`).join('');
   updateLocChipsVisibility();
-  openModal('modal-close');
+  const rows = drinkTypes.filter(d => d.count > 0).map(d =>
+    `<div class="row"><span class="row-main"><span class="row-title">${esc(d.name)}</span><span class="row-sub num">${d.count} × ${fmt(d.price)}</span></span>` +
+    `<span class="row-value num">${fmt(d.count * d.price)}</span></div>`).join('');
+  $('closeBill').innerHTML = rows +
+    `<div class="row"><span class="row-label">Zwischensumme</span><span class="row-value num">${fmt(totalSubtotal())}</span></div>` +
+    `<div class="row"><span class="row-label">Trinkgeld (${fmtPct(tipPct)})</span><span class="row-value num">${fmt(totalTip())}</span></div>` +
+    `<div class="row row-total"><span class="row-label">Gesamt</span><span class="row-value num">${fmt(totalGrand())}</span></div>`;
 }
-
+function pickLocation(i) {
+  $('m-location').value = _recentLocs[i] || '';
+  updateLocChipsVisibility();
+}
+function updateLocChipsVisibility() {
+  // Vorschläge nur zeigen, solange noch kein Ort eingetippt oder gewählt ist
+  $('locRecentWrap').hidden = !!$('m-location').value.trim() || _recentLocs.length === 0;
+}
+function showGpsNote(msg) {
+  const n = $('gpsNote');
+  n.textContent = msg;
+  n.hidden = false;
+}
 function saveEvening() {
-  const loc = document.getElementById('m-location').value.trim() || 'Unbekannt';
+  if (totalCount() === 0) { closeSheet(); return; }
+  const loc = $('m-location').value.trim() || 'Unbekannt';
   const session = {
     id: uid(),
     date: new Date(),
@@ -1095,588 +1466,263 @@ function saveEvening() {
   };
   history.unshift(session);
   upsertPreset(loc, session.drinks);
-  closeModal('modal-close');
-  resetSessionData(false);
+  closeSheet();
+  resetSessionData();
   save();
-  // Daten im Hintergrund aktuell halten, ohne das Menü automatisch zu öffnen
-  renderPresetList();
-  renderHistory();
-  haptic('success');
   toast(`Abend gespeichert · ${fmt(session.total)}`);
 }
-
-// ── Reset ─────────────────────────────────────────────────────────────────────
-function resetSessionData(keepTypes = true) {
+function resetSessionData() {
   _evtShowAll = false;
   _evtLastLen = 0;
   drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); });
-  if (keepTypes) {
-    // Zähler zurücksetzen, Getränke als Favoriten behalten
-    drinkTypes.forEach(dt => { dt.count = 0; dt.cooldown = false; dt.timer = null; });
-  } else {
-    // Abend abgeschlossen → Liste leeren (Preise über Orts-Chips wiederholbar)
-    drinkTypes = [];
-  }
+  drinkTypes = [];     // Preise kommen beim nächsten Mal über "Preise laden"
   eventLog = [];
-  renderDrinkTypes();
-  renderSummary();
-  renderEventLog();
+  renderAll();
 }
 
-// ── History ───────────────────────────────────────────────────────────────────
-function renderHistory() {
-  const listView = document.getElementById('history-list-view');
-  const detailView = document.getElementById('history-detail-view');
-  detailView.style.display = 'none';
-  listView.style.display = 'block';
-  if (!_editPresetId) document.getElementById('preset-list-view').style.display = 'block';
+// ── Lokale in der Nähe ──
+let _venueToken = 0;
+let _venues = [];
+let _leafletMap = null;
+const VENUE_ICONS = { bar: '🍸', pub: '🍺', restaurant: '🍽️', cafe: '☕', biergarten: '🌳', nightclub: '🎵' };
+const VENUE_TYPES = { bar: 'Bar', pub: 'Pub', restaurant: 'Restaurant', cafe: 'Café', biergarten: 'Biergarten', nightclub: 'Club' };
+const RADAR = `<svg class="radar" viewBox="0 0 120 120" aria-hidden="true">
+  <circle class="radar-ring" cx="60" cy="60" r="54"/><circle class="radar-ring" cx="60" cy="60" r="40"/>
+  <circle class="radar-ring" cx="60" cy="60" r="26"/><circle class="radar-ring" cx="60" cy="60" r="12"/>
+  <line class="radar-cross" x1="60" y1="6" x2="60" y2="114"/><line class="radar-cross" x1="6" y1="60" x2="114" y2="60"/>
+  <defs><radialGradient id="sweepGrad" cx="60" cy="60" r="54" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="#2DA44E" stop-opacity=".9"/><stop offset="100%" stop-color="#2DA44E" stop-opacity="0"/></radialGradient></defs>
+  <g class="radar-sweep"><path d="M60 60 L60 6 A54 54 0 0 1 108 78 Z" fill="url(#sweepGrad)" opacity=".85"/></g>
+  <circle class="radar-pulse" cx="60" cy="60" r="8"/><circle class="radar-pulse" cx="60" cy="60" r="8"/><circle class="radar-pulse" cx="60" cy="60" r="8"/>
+  <circle class="radar-dot" cx="60" cy="60" r="4"/></svg>`;
 
-  if (history.length === 0) {
-    listView.innerHTML = '<div class="history-empty">Noch keine gespeicherten Abende.<br>Schließe einen Abend ab um ihn hier zu sehen.</div>';
-    refreshOpenAccordions();
+function openNearby() {
+  setView('sheet-close', 'venues');
+  startVenueSearch();
+}
+function backFromVenues() {
+  _venueToken++;
+  setView('sheet-close', 'main');
+}
+function startVenueSearch() {
+  const token = ++_venueToken;
+  destroyVenueMap();
+  $('venueStatus').hidden = false;
+  $('venueStatus').innerHTML = RADAR + '<div class="venue-wait">Suche Lokale in der Nähe …</div>';
+  $('venueList').hidden = true;
+  $('venueList').innerHTML = '';
+  if (!('geolocation' in navigator)) { venueFail('Standort ist auf diesem Gerät nicht verfügbar.'); return; }
+  loadLeaflet().catch(() => {});   // parallel zur Standortsuche vorladen
+  // Obergrenze, falls die Standortabfrage nie antwortet: das Radar soll nicht endlos laufen
+  const guard = setTimeout(() => { if (token === _venueToken) { _venueToken++; venueFail('Standort nicht verfügbar. Ort bitte manuell eingeben.'); } }, 20000);
+  navigator.geolocation.getCurrentPosition(
+    pos => { clearTimeout(guard); if (token === _venueToken) fetchNearbyVenues(pos.coords.latitude, pos.coords.longitude, token); },
+    ()  => { clearTimeout(guard); if (token === _venueToken) venueFail('Standort nicht verfügbar. Ort bitte manuell eingeben.'); },
+    { timeout: 8000, maximumAge: 60000 }
+  );
+}
+function venueFail(msg) {
+  if (_openSheet !== 'sheet-close') return;
+  setView('sheet-close', 'main');
+  showGpsNote(msg);
+}
+async function fetchNearbyVenues(lat, lon, token) {
+  const query = `[out:json][timeout:10];
+node(around:150,${lat},${lon})[amenity~"^(bar|pub|restaurant|cafe|biergarten|nightclub)$"];
+out body 15;`;
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const r = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query), signal: ctrl.signal });
+    const d = await r.json();
+    if (token !== _venueToken) return;
+    const venues = (d.elements || [])
+      .filter(e => e.tags && e.tags.name)
+      .map(e => ({ name: e.tags.name, type: e.tags.amenity, lat: e.lat, lon: e.lon, dist: Math.round(haversine(lat, lon, e.lat, e.lon)) }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 8);
+    if (!venues.length) { venueFail('Keine Lokale in der Nähe gefunden.'); return; }
+    showVenueList(venues, lat, lon);
+  } catch (e) {
+    if (token === _venueToken) venueFail('Suche fehlgeschlagen. Ort bitte manuell eingeben.');
+  } finally {
+    clearTimeout(to);
+  }
+}
+function haversine(la1, lo1, la2, lo2) {
+  const R = 6371000, r = Math.PI / 180;
+  const dLat = (la2 - la1) * r, dLon = (lo2 - lo1) * r;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function showVenueList(venues, lat, lon) {
+  _venues = venues;
+  $('venueStatus').hidden = true;
+  const list = $('venueList');
+  list.innerHTML = venues.map((v, i) =>
+    `<button class="row tappable" style="--inset:58px" onclick="pickVenue(${i})"><span class="row-ic venue-ic">${VENUE_ICONS[v.type] || '📍'}</span>` +
+    `<span class="row-main"><span class="row-title">${esc(v.name)}</span><span class="row-sub">${v.dist} m · ${esc(VENUE_TYPES[v.type] || v.type || '')}</span></span></button>`).join('') +
+    `<button class="row tappable" style="--inset:58px" onclick="pickVenue(-1)"><span class="row-ic ic-gray">${icon('pencil')}</span><span class="row-label">Manuell eingeben</span></button>`;
+  list.hidden = false;
+  initVenueMap(venues, lat, lon);
+}
+function pickVenue(i) {
+  const v = i >= 0 ? _venues[i] : null;
+  _venueToken++;
+  setView('sheet-close', 'main');
+  if (v) { $('m-location').value = v.name; updateLocChipsVisibility(); }
+  else focusSoon($('m-location'));
+}
+
+// Leaflet erst laden, wenn die Lokalsuche gebraucht wird. crossOrigin, damit der
+// Service Worker die Dateien cachen kann (ohne CORS sind sie opaque und werden verworfen).
+let _leafletPromise = null;
+function loadLeaflet() {
+  if (window.L) return Promise.resolve();
+  if (_leafletPromise) return _leafletPromise;
+  _leafletPromise = new Promise((resolve, reject) => {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.crossOrigin = 'anonymous';
+    css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+    const js = document.createElement('script');
+    js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.crossOrigin = 'anonymous';
+    js.onload  = () => resolve();
+    js.onerror = () => { _leafletPromise = null; css.remove(); js.remove(); reject(new Error('leaflet')); };
+    document.head.appendChild(js);
+  });
+  return _leafletPromise;
+}
+function destroyVenueMap() {
+  if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
+  $('venueMap').style.display = 'none';
+}
+function initVenueMap(venues, lat, lon) {
+  const stillHere = () => _openSheet === 'sheet-close' && activeView('sheet-close') === 'venues' && _venues === venues;
+  loadLeaflet().then(() => {
+    if (!stillHere()) return;
+    destroyVenueMap();
+    const mapEl = $('venueMap');
+    mapEl.style.display = 'block';
+    setTimeout(() => {
+      if (!stillHere() || _leafletMap) return;
+      _leafletMap = L.map(mapEl, { zoomControl: false, attributionControl: true }).setView([lat, lon], 17);
+      _leafletMap.attributionControl.setPrefix(false);
+      // OSM verlangt eine sichtbare Quellenangabe
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(_leafletMap);
+      L.circleMarker([lat, lon], { radius: 8, fillColor: '#007AFF', color: '#fff', weight: 2.5, fillOpacity: 1 }).addTo(_leafletMap);
+      venues.forEach((v, vi) => {
+        if (!v.lat || !v.lon) return;
+        const pin = L.divIcon({
+          className: '',
+          html: `<div style="background:#C75000;color:#fff;border-radius:50% 50% 50% 0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)"><span style="transform:rotate(45deg)">${VENUE_ICONS[v.type] || '📍'}</span></div>`,
+          iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28]
+        });
+        L.marker([v.lat, v.lon], { icon: pin }).addTo(_leafletMap).bindPopup(
+          `<div class="venue-popup"><b>${esc(v.name)}</b><small>${v.dist} m · ${esc(VENUE_TYPES[v.type] || v.type || '')}</small>` +
+          `<button class="venue-popup-btn" onclick="pickVenue(${vi})">Übernehmen</button></div>`, { maxWidth: 220, closeButton: false });
+      });
+      const pts = [[lat, lon], ...venues.filter(v => v.lat).map(v => [v.lat, v.lon])];
+      if (pts.length > 1) _leafletMap.fitBounds(L.latLngBounds(pts), { padding: [28, 28], maxZoom: 17 });
+    }, 60);
+  }).catch(() => {});
+}
+
+// ════════════════ Verlauf ════════════════
+function openHistory() {
+  renderHistoryList();
+  openSheet('sheet-history', 'list');
+}
+function renderHistoryList() {
+  const el = $('historyList');
+  if (!history.length) {
+    el.innerHTML = `<div class="empty">${icon('clock')}<div class="empty-title">Noch keine Abende</div>Schließe einen Abend ab, dann erscheint er hier.</div>`;
     return;
   }
-  listView.innerHTML = history.map(h => `
-    <div class="history-item" onclick="showHistoryDetail(${h.id})">
-      <div class="history-header">
-        <div>
-          <div class="history-date">${dateStr(new Date(h.date))}</div>
-          <div class="history-location">📍 ${esc(h.location)}</div>
-        </div>
-        <div class="history-total">${fmt(h.total)}</div>
-      </div>
-      <div class="history-tags">
-        ${h.drinks.map(d => `<div class="history-tag">${esc(d.name)} <span>×${d.count}</span></div>`).join('')}
-        <div class="history-tag">Tip <span>${h.tipPct}%</span></div>
-      </div>
-    </div>`).join('');
-  refreshOpenAccordions();
+  let html = '', cur = null;
+  history.forEach(h => {
+    const d = new Date(h.date);
+    const m = monthLbl(d);
+    if (m !== cur) {
+      if (cur !== null) html += '</div>';
+      html += `<h2 class="group-header">${esc(m)}</h2><div class="group">`;
+      cur = m;
+    }
+    const n = (h.drinks || []).reduce((s, x) => s + num(x.count), 0);
+    html += `<button class="row tappable" onclick="showHistoryDetail(${h.id})"><span class="row-main"><span class="row-title">${esc(h.location || 'Unbekannt')}</span>` +
+      `<span class="row-sub">${esc(dateShort(d))} · ${n} Drink${n === 1 ? '' : 's'}</span></span>` +
+      `<span class="row-value num">${fmt(num(h.total))}</span>${icon('chevron-right', 'chev')}</button>`;
+  });
+  el.innerHTML = html + '</div>';
 }
-
 function showHistoryDetail(id) {
   const h = history.find(x => x.id === id);
   if (!h) return;
-  const listView   = document.getElementById('history-list-view');
-  const detailView = document.getElementById('history-detail-view');
-  listView.style.display = 'none';
-  detailView.style.display = 'block';
-  document.getElementById('preset-list-view').style.display = 'none';
-
-  const eventsHtml = (h.events || []).length === 0 ? '' : `
-    <div class="card" style="margin-top:0">
-      <div class="card-label">Bestellverlauf</div>
-      <div class="evt-list">
-        ${[...h.events].reverse().map((e,i) => `
-          <div class="evt-item">
-            <div class="evt-dot"></div>
-            <div class="evt-num">#${h.events.length - i}</div>
-            <div class="evt-name">${esc(e.typeName)}</div>
-            <div class="evt-time">${timeStr(new Date(e.time))}</div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-
-  detailView.innerHTML = `
-    <button class="back-btn" onclick="renderHistory()">← Zurück</button>
-    <div class="card" style="margin-top:0">
-      <div style="margin-bottom:14px">
-        <div style="font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:4px">${dateStr(new Date(h.date))}</div>
-        <div style="font-size:.72rem;color:var(--muted)">📍 ${esc(h.location)}</div>
-      </div>
-      ${h.drinks.map(d => `
-        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem;">
-          <span style="color:var(--text)">${esc(d.name)}</span>
-          <span style="color:var(--muted)">${d.count}× ${fmt(d.price)} = <span style="color:var(--accent)">${fmt(d.count*d.price)}</span></span>
-        </div>`).join('')}
-      <div style="display:flex;justify-content:space-between;padding:10px 0 6px;font-size:.75rem;">
-        <span style="color:var(--muted)">Subtotal</span><span style="color:var(--text)">${fmt(h.subtotal)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:4px 0 10px;font-size:.75rem;border-bottom:1px solid var(--border);">
-        <span style="color:var(--muted)">Trinkgeld (${h.tipPct}%)</span><span style="color:var(--text)">${fmt(h.tipAmt)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:14px 0 0;align-items:center;">
-        <span style="font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Gesamt</span>
-        <span style="font-family:'Nunito',sans-serif;font-size:1.9rem;font-weight:800;color:var(--success)">${fmt(h.total)}</span>
-      </div>
-    </div>
-    ${eventsHtml}
-    <button class="btn btn-danger" style="width:100%;height:42px;border-radius:12px;margin-top:4px;" onclick="deleteHistory(${h.id})">
-      🗑 &nbsp;Abend löschen
-    </button>`;
-  refreshOpenAccordions();
+  const d = new Date(h.date);
+  const drinks = h.drinks || [], events = h.events || [];
+  $('histDetailTitle').textContent = dateShort(d);
+  const body = $('historyDetail');
+  body.innerHTML =
+    `<div class="detail-hero"><div class="detail-amount num">${fmt(num(h.total))}</div>` +
+    `<div class="detail-loc">${esc(h.location || 'Unbekannt')}</div><div class="detail-date">${esc(dateLong(d))}</div></div>` +
+    `<h2 class="group-header">Getränke</h2><div class="group">` +
+    drinks.map(x => `<div class="row"><span class="row-main"><span class="row-title">${esc(x.name)}</span><span class="row-sub num">${num(x.count)} × ${fmt(num(x.price))}</span></span>` +
+      `<span class="row-value num">${fmt(num(x.count) * num(x.price))}</span></div>`).join('') + `</div>` +
+    `<div class="group spaced">` +
+      `<div class="row"><span class="row-label">Zwischensumme</span><span class="row-value num">${fmt(num(h.subtotal))}</span></div>` +
+      `<div class="row"><span class="row-label">Trinkgeld (${fmtPct(num(h.tipPct))})</span><span class="row-value num">${fmt(num(h.tipAmt))}</span></div>` +
+      `<div class="row row-total"><span class="row-label">Gesamt</span><span class="row-value num">${fmt(num(h.total))}</span></div></div>` +
+    (events.length ? `<h2 class="group-header">Bestellverlauf</h2><div class="group">` +
+      [...events].reverse().map((e, i) => `<div class="row evt"><span class="evt-num num">${events.length - i}</span><span class="evt-name">${esc(e.typeName)}</span>` +
+        `<span class="evt-time num">${timeStr(new Date(e.time))}</span></div>`).join('') + `</div>` : '') +
+    `<div class="group spaced"><button class="row tappable action danger" onclick="deleteHistory(${h.id})">Abend löschen</button></div>`;
+  body.scrollTop = 0;
+  setView('sheet-history', 'detail');
 }
-
 function deleteHistory(id) {
   askConfirm('Abend löschen?', 'Dieser gespeicherte Abend wird dauerhaft entfernt.', 'Löschen', () => {
     history = history.filter(h => h.id !== id);
     save();
-    renderHistory();
+    renderHistoryList();
+    setView('sheet-history', 'list');
     toast('Abend gelöscht');
   });
 }
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+// ════════════════ Einstellungen und Orte ════════════════
+let _editPresetId = null;
+function openSettings() {
+  renderSettings();
+  openSheet('sheet-settings', 'root');
 }
-
-// ── Settings Accordion ────────────────────────────────────────────────────────
-function toggleAccordion(bodyId, chevId) {
-  const body = document.getElementById(bodyId);
-  const chev = document.getElementById(chevId);
-  const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
-  if (isOpen) {
-    body.style.maxHeight = '0px';
-    chev.style.transform = '';
-  } else {
-    body.style.maxHeight = body.scrollHeight + 'px';
-    chev.style.transform = 'rotate(180deg)';
-  }
-  return !isOpen; // true = wurde gerade geöffnet
+function renderSettings() {
+  renderSeg($('themeSeg'), [{ v: 'auto', label: 'Automatisch' }, { v: 'light', label: 'Hell' }, { v: 'dark', label: 'Dunkel' }], themePref(), setThemePref);
+  $('gpsToggle').checked = gpsEnabled;
+  renderPresetList();
 }
-function closeAccordion(bodyId, chevId) {
-  const body = document.getElementById(bodyId);
-  const chev = document.getElementById(chevId);
-  if (body.style.maxHeight && body.style.maxHeight !== '0px') {
-    body.style.maxHeight = '0px';
-    chev.style.transform = '';
-    return true; // war offen, wurde geschlossen
-  }
-  return false;
+function renderPresetList() {
+  const el = $('presetList');
+  el.innerHTML = locationPresets.length
+    ? locationPresets.map(p =>
+        `<button class="row tappable" style="--inset:58px" onclick="openPresetEditor(${p.id})"><span class="row-ic ic-red">${icon('pin')}</span>` +
+        `<span class="row-main"><span class="row-title">${esc(p.name || 'Ohne Namen')}</span><span class="row-sub">${drinkCountLabel(p.drinks.length)}</span></span>` +
+        `${icon('chevron-right', 'chev')}</button>`).join('')
+    : `<div class="row"><span class="row-label muted">Noch keine Orte gespeichert</span></div>`;
 }
-function toggleSettings() {
-  const justOpened = toggleAccordion('settingsBody', 'settingsChevron');
-  if (justOpened) {
-    if (closeAccordion('presetWrap', 'presetChevron')) { _editPresetId = null; renderPresetList(); }
-    closeAccordion('verlaufWrap', 'verlaufChevron');
-  }
-}
-function togglePresetSection() {
-  const wasOpen = document.getElementById('presetWrap').style.maxHeight &&
-                  document.getElementById('presetWrap').style.maxHeight !== '0px';
-  const justOpened = toggleAccordion('presetWrap', 'presetChevron');
-  if (justOpened) {
-    closeAccordion('settingsBody', 'settingsChevron');
-    closeAccordion('verlaufWrap', 'verlaufChevron');
-  }
-  if (wasOpen) {
-    // Beim Zuklappen: zurück auf Listenansicht statt im Bearbeiten-Modus eines Ortes zu bleiben.
-    _editPresetId = null;
-    renderPresetList();
-  }
-}
-function toggleVerlaufSection() {
-  const wasOpen = document.getElementById('verlaufWrap').style.maxHeight &&
-                  document.getElementById('verlaufWrap').style.maxHeight !== '0px';
-  const justOpened = toggleAccordion('verlaufWrap', 'verlaufChevron');
-  if (justOpened) {
-    closeAccordion('settingsBody', 'settingsChevron');
-    if (closeAccordion('presetWrap', 'presetChevron')) { _editPresetId = null; renderPresetList(); }
-  }
-  if (wasOpen) {
-    // Beim Zuklappen: zurück auf Listenansicht, damit man beim nächsten Öffnen
-    // nicht noch in der Detailansicht eines Abends "hängt".
-    renderHistory();
-  }
-}
-function refreshOpenAccordions() {
-  // Falls eine Sektion offen ist und sich der Inhalt geändert hat: Höhe nachziehen
-  ['presetWrap', 'verlaufWrap'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el && el.style.maxHeight && el.style.maxHeight !== '0px') {
-      el.style.maxHeight = el.scrollHeight + 'px';
-    }
-  });
-}
-
-// ── Dark Mode ────────────────────────────────────────────────────────────────
-function saveDarkMode(on) {
-  localStorage.setItem('drinks_dark', on ? '1' : '0');
-  if (!reduceMotion()) {
-    document.documentElement.classList.add('theme-switching');
-    setTimeout(() => document.documentElement.classList.remove('theme-switching'), 420);
-  }
-  applyDarkMode(on);
-}
-function applyDarkMode(on) {
-  document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]').content = on ? '#0e0e10' : '#faf6f0';
-  const el = document.getElementById('darkToggle');
-  if (el) el.checked = on;
-}
-function loadDarkMode() {
-  const stored = localStorage.getItem('drinks_dark');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  applyDarkMode(stored !== null ? stored === '1' : prefersDark);
-}
-
-// ── Haptic Feedback ───────────────────────────────────────────────────────────
-function haptic(type) {
-  const patterns = { light:[10], medium:[20], success:[10,40,10], error:[30,20,30] };
-  if (window.navigator && navigator.vibrate) navigator.vibrate(patterns[type] || [10]);
-}
-
-// ── Swipe +1 / −1 mit Einrast-Mechanik ──────────────────────────────────────
-function initSwipe() {
-  document.querySelectorAll('.drink-card').forEach(card => {
-    const m = card.id && card.id.match(/^dc-(\d+)$/);
-    if (!m) return;
-    const dtId = parseInt(m[1]);
-    let startX = 0, startY = 0, curX = 0;
-    let decided = false, isHoriz = false, snapped = false;
-    const SNAP = 72;
-    const DAMP = 0.3;
-
-    // ── touchstart ──────────────────────────────────────────────────────────
-    card.addEventListener('touchstart', e => {
-      const t = e.touches[0];
-      startX = t.clientX; startY = t.clientY;
-      curX = 0; decided = false; isHoriz = false; snapped = false;
-    }, { passive: true });
-
-    // ── touchmove ───────────────────────────────────────────────────────────
-    card.addEventListener('touchmove', e => {
-      const t = e.touches[0];
-      const dx = t.clientX - startX;
-      const dy = t.clientY - startY;
-
-      // Richtung einmalig festlegen – erst nach 6px Bewegung
-      if (!decided) {
-        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-        decided = true;
-        isHoriz = Math.abs(dx) > Math.abs(dy) * 1.1;
-        if (isHoriz) card.classList.add('dragging');
-      }
-      if (!isHoriz) return;
-
-      // Horizontale Geste: Scrollen verhindern
-      e.preventDefault();
-
-      // Karte folgt Finger: 1:1 bis SNAP, danach gedämpft
-      const sign = dx > 0 ? 1 : -1;
-      const abs  = Math.abs(dx);
-      curX = sign * (abs <= SNAP ? abs : SNAP + (abs - SNAP) * DAMP);
-      card.style.transform = 'translateX(' + curX + 'px)';
-
-      const hintAdd = document.getElementById('dca-' + dtId);
-      const hintSub = document.getElementById('dcs-' + dtId);
-      const prog = Math.min(1, Math.abs(curX) / SNAP);
-      if (curX > 0) {
-        if (hintAdd) hintAdd.style.opacity = prog;
-        if (hintSub) hintSub.style.opacity = 0;
-      } else {
-        if (hintSub) hintSub.style.opacity = prog;
-        if (hintAdd) hintAdd.style.opacity = 0;
-      }
-
-      // Einrasten: einmalig wenn SNAP erreicht
-      if (!snapped && Math.abs(curX) >= SNAP) {
-        snapped = true;
-        haptic('light');
-        const hint = curX > 0 ? hintAdd : hintSub;
-        if (hint) {
-          hint.classList.add('snapped');
-          setTimeout(() => hint.classList.remove('snapped'), 300);
-        }
-      }
-      // Snap zurücksetzen wenn zurückgezogen
-      if (snapped && Math.abs(curX) < SNAP * 0.65) {
-        snapped = false;
-      }
-    }, { passive: false }); // passive:false erlaubt preventDefault()
-
-    // ── touchend ────────────────────────────────────────────────────────────
-    card.addEventListener('touchend', () => {
-      const hintAdd = document.getElementById('dca-' + dtId);
-      const hintSub = document.getElementById('dcs-' + dtId);
-
-      if (isHoriz && snapped) {
-        if (curX > 0) {
-          haptic('medium');
-          addOne(dtId);
-        } else {
-          const dt = drinkTypes.find(d => d.id === dtId);
-          if (dt && dt.count > 0 && !dt.cooldown) {
-            haptic('medium');
-            dt.count--;
-            const last = eventLog.map((e,i) => ({e,i})).reverse().find(x => x.e.typeId === dtId);
-            if (last) eventLog.splice(last.i, 1);
-            const countEl = document.getElementById('dc-count-' + dtId);
-            if (countEl) {
-              countEl.textContent = dt.count;
-              countEl.classList.remove('bump');
-              void countEl.offsetWidth;
-              countEl.classList.add('bump');
-              setTimeout(() => countEl.classList.remove('bump'), 200);
-            }
-            // Roten Cooldown-Ring auf dem + Button starten
-            const btn  = document.getElementById('dc-btn-' + dtId);
-            const circ = document.getElementById('dc-circ-' + dtId);
-            dt.cooldown = true;
-            if (btn) { btn.disabled = true; btn.classList.remove('cooling'); btn.classList.add('cooling-sub'); }
-            startRing(circ, COOLDOWN, () => {
-              dt.cooldown = false;
-              if (btn) { btn.disabled = false; btn.classList.remove('cooling-sub'); }
-              if (!drinkTypes.some(d => d.cooldown)) renderDrinkTypes();
-            }, true);
-            if (dt.timer) clearTimeout(dt.timer);
-            dt.timer = setTimeout(() => {
-              dt.cooldown = false;
-              if (btn) { btn.disabled = false; btn.classList.remove('cooling-sub'); }
-            }, COOLDOWN);
-            renderSummary();
-            renderEventLog();
-            save();
-          }
-        }
-      }
-
-      // Zurückschnappen
-      card.classList.remove('dragging');
-      card.style.transform = '';
-      if (hintAdd) hintAdd.style.opacity = 0;
-      if (hintSub) hintSub.style.opacity = 0;
-      curX = 0; snapped = false;
-    });
-
-    // touchcancel = Finger weg ohne Ende (z.B. Anruf) → sauber resetten
-    card.addEventListener('touchcancel', () => {
-      card.classList.remove('dragging');
-      card.style.transform = '';
-      const hintAdd = document.getElementById('dca-' + dtId);
-      const hintSub = document.getElementById('dcs-' + dtId);
-      if (hintAdd) hintAdd.style.opacity = 0;
-      if (hintSub) hintSub.style.opacity = 0;
-      curX = 0; snapped = false; decided = false;
-    });
-  });
-}
-
-// ── GPS Ortserkennung ────────────────────────────────────────────────────────
-let gpsEnabled = false;
-
 function saveGpsSetting(val) {
   gpsEnabled = val;
   localStorage.setItem('drinks_gps', val ? '1' : '0');
   if (val && !('geolocation' in navigator)) {
-    toast('GPS ist auf diesem Gerät nicht verfügbar');
-    document.getElementById('gpsToggle').checked = false;
+    toast('Standort ist auf diesem Gerät nicht verfügbar', 'info');
+    $('gpsToggle').checked = false;
     gpsEnabled = false;
     localStorage.setItem('drinks_gps', '0');
   }
 }
 function loadGpsSetting() {
   gpsEnabled = localStorage.getItem('drinks_gps') === '1';
-  const el = document.getElementById('gpsToggle');
-  if (el) el.checked = gpsEnabled;
-}
-function openCloseEveningWithGps() {
-  if (!gpsEnabled) { openCloseEvening(); return; }
-  // Sofort Venue-Sheet mit Ladeindikator zeigen
-  document.getElementById('venueList').innerHTML = `
-    <div style="text-align:center;padding:24px 0 28px;color:var(--muted);">
-      <div class="radar-wrap">
-        <svg class="radar-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <!-- Konzentrische Ringe -->
-          <circle class="radar-ring" cx="60" cy="60" r="54"/>
-          <circle class="radar-ring" cx="60" cy="60" r="40"/>
-          <circle class="radar-ring" cx="60" cy="60" r="26"/>
-          <circle class="radar-ring" cx="60" cy="60" r="12"/>
-          <!-- Fadenkreuz -->
-          <line class="radar-cross" x1="60" y1="6" x2="60" y2="114"/>
-          <line class="radar-cross" x1="6" y1="60" x2="114" y2="60"/>
-          <!-- Sweep-Strahl -->
-          <g class="radar-sweep">
-            <path d="M60 60 L60 6 A54 54 0 0 1 108 78 Z"
-              fill="url(#sweepGrad)" opacity=".85"/>
-            <defs>
-              <radialGradient id="sweepGrad" cx="60" cy="60" r="54" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#1f9d63" stop-opacity=".9"/>
-                <stop offset="100%" stop-color="#1f9d63" stop-opacity="0"/>
-              </radialGradient>
-            </defs>
-          </g>
-          <!-- Ping-Ringe -->
-          <circle class="radar-pulse" cx="60" cy="60" r="8"/>
-          <circle class="radar-pulse" cx="60" cy="60" r="8"/>
-          <circle class="radar-pulse" cx="60" cy="60" r="8"/>
-          <!-- Mittelpunkt -->
-          <circle class="radar-dot" cx="60" cy="60" r="4"/>
-        </svg>
-      </div>
-      <div style="font-size:.8rem;">Suche Lokale in der Nähe…</div>
-    </div>`;
-  document.getElementById('venueModal').classList.add('open');
-  navigator.geolocation.getCurrentPosition(
-    pos => fetchNearbyVenues(pos.coords.latitude, pos.coords.longitude),
-    ()  => { closeVenuePicker(); openCloseEvening(); showGpsNote('Standort nicht verfügbar, Ort bitte manuell wählen.'); },
-    { timeout: 6000, maximumAge: 60000 }
-  );
-}
-async function fetchNearbyVenues(lat, lon) {
-  const query = `[out:json][timeout:10];
-node(around:150,${lat},${lon})[amenity~"^(bar|pub|restaurant|cafe|biergarten|nightclub)$"];
-out body 15;`;
-  try {
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST', body: 'data=' + encodeURIComponent(query)
-    });
-    const d = await r.json();
-    const venues = (d.elements || [])
-      .filter(e => e.tags && e.tags.name)
-      .map(e => ({
-        name: e.tags.name,
-        type: e.tags.amenity,
-        lat: e.lat,
-        lon: e.lon,
-        dist: Math.round(haversine(lat, lon, e.lat, e.lon)),
-      }))
-      .sort((a, b) => a.dist - b.dist)
-      .slice(0, 8);
-    if (venues.length === 0) { closeVenuePicker(); openCloseEvening(); showGpsNote('Keine Lokale in der Nähe gefunden.'); return; }
-    showVenuePicker(venues, lat, lon);
-  } catch(e) { closeVenuePicker(); openCloseEvening(); showGpsNote('Suche fehlgeschlagen, Ort bitte manuell wählen.'); }
-}
-function haversine(la1, lo1, la2, lo2) {
-  const R = 6371000, r = Math.PI / 180;
-  const dLat = (la2 - la1) * r, dLon = (lo2 - lo1) * r;
-  const a = Math.sin(dLat/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-const VENUE_ICONS = { bar:'🍸', pub:'🍺', restaurant:'🍽', cafe:'☕', biergarten:'🌿', nightclub:'🎵' };
-let _leafletMap = null;
-let _venues = [];
-function showVenuePicker(venues, userLat, userLon) {
-  _venues = venues;
-  // Liste aufbauen
-  document.getElementById('venueList').innerHTML =
-    venues.map((v, vi) => `
-      <div class="venue-item" onclick="pickVenue(${vi})"\'")}')">
-        <span style="font-size:1.4rem">${VENUE_ICONS[v.type] || '📍'}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(v.name)}</div>
-          <div class="venue-dist">${v.dist} m entfernt · ${v.type}</div>
-        </div>
-      </div>`).join('') +
-    `<div class="venue-item" onclick="pickVenue(-1)" style="opacity:.6;">
-      <span style="font-size:1.4rem">✏️</span>
-      <div style="font-size:.85rem;color:var(--muted);">Manuell eingeben</div>
-    </div>`;
-
-  // Karte einblenden
-  if (userLat && typeof L !== 'undefined') {
-    const mapEl = document.getElementById('venueMap');
-    mapEl.style.display = 'block';
-
-    // Bestehende Karte zerstören wenn vorhanden
-    if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
-
-    // Kurz warten damit das Div sichtbar ist, dann initialisieren
-    setTimeout(() => {
-      _leafletMap = L.map('venueMap', { zoomControl: false, attributionControl: false })
-        .setView([userLat, userLon], 17);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-      }).addTo(_leafletMap);
-
-      // Eigener Standort – blauer Kreis
-      L.circleMarker([userLat, userLon], {
-        radius: 8, fillColor: '#3b82f6', color: '#fff',
-        weight: 2, fillOpacity: 1
-      }).addTo(_leafletMap);
-
-      // Lokale als Pins
-      const accent = getComputedStyle(document.documentElement)
-        .getPropertyValue('--accent').trim() || '#e0701f';
-      venues.forEach((v, vi) => {
-        if (!v.lat || !v.lon) return;
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="
-            background:${accent};color:#fff;border-radius:50% 50% 50% 0;
-            width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-            font-size:13px;transform:rotate(-45deg);border:2px solid #fff;
-            box-shadow:0 2px 6px rgba(0,0,0,.25);">
-            <span style="transform:rotate(45deg)">${VENUE_ICONS[v.type] || '📍'}</span>
-          </div>`,
-          iconSize: [28, 28], iconAnchor: [14, 28]
-        });
-        L.marker([v.lat, v.lon], { icon })
-          .addTo(_leafletMap)
-          .bindPopup(`
-            <div class="venue-popup">
-              <b>${esc(v.name)}</b>
-              <small>${v.dist} m entfernt · ${v.type}</small>
-              <button class="venue-popup-btn" onclick="pickVenue(${vi})">
-                ✓ &nbsp;Übernehmen
-              </button>
-            </div>`, { maxWidth: 200, closeButton: false });
-      });
-
-      // Karte auf alle Punkte einzoomen
-      const allPts = [[userLat, userLon], ...venues.filter(v => v.lat).map(v => [v.lat, v.lon])];
-      if (allPts.length > 1) {
-        _leafletMap.fitBounds(L.latLngBounds(allPts), { padding: [24, 24], maxZoom: 17 });
-      }
-    }, 80);
-  }
-}
-function pickVenue(i) {
-  const name = (i >= 0 && _venues[i]) ? _venues[i].name : '';
-  closeVenuePicker();
-  openCloseEvening();
-  if (name) setTimeout(() => { document.getElementById('m-location').value = name; updateLocChipsVisibility(); }, 50);
-}
-function closeVenuePicker() {
-  document.getElementById('venueModal').classList.remove('open');
-  document.getElementById('venueMap').style.display = 'none';
-  if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
-}
-
-// ── Tempo-Anzeige ─────────────────────────────────────────────────────────────
-function renderPace() {
-  const el = document.getElementById('paceLine');
-  if (!el) return;
-  if (eventLog.length === 0) { el.style.display = 'none'; return; }
-  const last = eventLog[eventLog.length - 1].time;
-  const mins = Math.floor((Date.now() - last.getTime()) / 60000);
-  let txt = mins < 1 ? '⏱ Letzter Drink: gerade eben' : `⏱ Letzter Drink vor ${mins} Min`;
-  if (eventLog.length >= 2) {
-    const first = eventLog[0].time;
-    const avg = Math.round((last - first) / 60000 / (eventLog.length - 1));
-    if (avg > 0) txt += ` · Ø alle ${avg} Min`;
-  }
-  el.textContent = txt;
-  el.style.display = 'block';
-}
-setInterval(renderPace, 30000);
-
-// ── Location-Presets & Orts-Vorschläge ────────────────────────────────────────
-let _recentLocs = [];
-let locationPresets = [];
-let _editPresetId = null;
-const INP = "background:none;border:none;outline:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:.85rem;width:100%;padding:8px 0;";
-
-function recentLocations() {
-  const seen = locationPresets.map(p => p.name);
-  for (const h of history) {
-    const l = (h.location || '').trim();
-    if (l && l !== 'Unbekannt' && !seen.some(s => s.toLowerCase() === l.toLowerCase())) seen.push(l);
-  }
-  return seen.slice(0, 6);
-}
-function pickLocation(i) {
-  document.getElementById('m-location').value = _recentLocs[i];
-  updateLocChipsVisibility();
-}
-function updateLocChipsVisibility() {
-  const val = document.getElementById('m-location').value.trim();
-  const chipsEl = document.getElementById('locChips');
-  if (!chipsEl) return;
-  // Chips nur zeigen solange das Feld leer ist – ist schon ein Ort gewählt/eingetippt,
-  // sind die Vorschläge überflüssig und blenden sich aus.
-  chipsEl.style.display = val ? 'none' : 'flex';
 }
 
 function upsertPreset(loc, drinks) {
@@ -1693,80 +1739,54 @@ function upsertPreset(loc, drinks) {
 function migratePresets() {
   for (const h of [...history].reverse()) upsertPreset(h.location, h.drinks);
 }
-
-function renderPresetList() {
-  const el = document.getElementById('presetList');
-  document.getElementById('preset-edit-view').style.display = 'none';
-  document.getElementById('preset-list-view').style.display = 'block';
-  if (locationPresets.length === 0) {
-    el.innerHTML = '<div class="evt-empty" style="padding:10px 0;">Wird automatisch angelegt, sobald du einen Abend mit Ort abschließt.</div>';
-    refreshOpenAccordions();
-    return;
-  }
-  el.innerHTML = locationPresets.map(p => `
-    <div class="history-item" style="display:flex;align-items:center;gap:10px;">
-      <div style="flex:1;cursor:pointer;min-width:0;" onclick="openPresetEditor(${p.id})">
-        <div class="history-location" style="font-size:.85rem;">📍 ${esc(p.name)}</div>
-        <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${p.drinks.length} Getränk${p.drinks.length === 1 ? '' : 'e'} · antippen zum Bearbeiten ✎</div>
-      </div>
-      <button class="btn btn-primary" style="height:34px;padding:0 14px;border-radius:10px;font-size:.62rem;flex-shrink:0;" onclick="loadPreset(${p.id})">⇧ Preise laden</button>
-    </div>`).join('');
-  refreshOpenAccordions();
-}
-
 function loadPreset(id) {
   const p = locationPresets.find(x => x.id === id);
   if (!p) return;
   for (const d of p.drinks) {
     if (!String(d.name).trim()) continue;
     const ex = drinkTypes.find(t => t.name.toLowerCase() === d.name.toLowerCase());
-    if (ex) ex.price = d.price;
-    else drinkTypes.push({ id: uid(), name: d.name, price: d.price, count: 0, cooldown: false, timer: null });
+    if (ex) ex.price = num(d.price);
+    else drinkTypes.push({ id: uid(), name: d.name, price: num(d.price), count: 0, cooldown: false, timer: null });
   }
+  if (_openSheet) closeSheet();
   renderDrinkTypes();
   renderSummary();
   save();
-  document.getElementById('drawerBg').classList.remove('open');
+  toast(`Preise von ${p.name || 'Ort'} geladen`);
 }
-
 function openPresetEditor(id) {
   _editPresetId = id;
-  document.getElementById('preset-list-view').style.display = 'none';
-  document.getElementById('history-list-view').style.display = 'none';
-  document.getElementById('history-detail-view').style.display = 'none';
   renderPresetEditor();
+  setView('sheet-settings', 'place');
 }
 function closePresetEditor() {
   _editPresetId = null;
   renderPresetList();
-  renderHistory();
+  setView('sheet-settings', 'root');
 }
 function renderPresetEditor() {
   const p = locationPresets.find(x => x.id === _editPresetId);
-  const view = document.getElementById('preset-edit-view');
   if (!p) { closePresetEditor(); return; }
-  view.style.display = 'block';
-  view.innerHTML = `
-    <button class="btn btn-ghost" style="height:34px;padding:0 14px;border-radius:10px;margin-bottom:14px;" onclick="closePresetEditor()">← Zurück</button>
-    <div class="card" style="padding:16px 18px;">
-      <div class="card-label">Ort</div>
-      <div class="input-row"><input type="text" value="${esc(p.name)}" oninput="presetName(this.value)" style="${INP}"></div>
-      <div class="card-label" style="margin-top:6px;">Getränke &amp; Preise</div>
-      ${p.drinks.map((d, i) => `
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-          <div class="input-row" style="margin-bottom:0;flex:1;"><input type="text" value="${esc(d.name)}" placeholder="Name" oninput="presetDrink(${i},'name',this.value)" style="${INP}"></div>
-          <div class="input-row" style="margin-bottom:0;width:92px;flex-shrink:0;"><input type="text" inputmode="decimal" value="${String(d.price).replace('.', ',')}" placeholder="0,00" oninput="presetDrink(${i},'price',this.value)" style="${INP}"><span class="input-suffix">€</span></div>
-          <button class="btn btn-ghost" style="height:34px;width:34px;padding:0;border-radius:10px;color:var(--danger);flex-shrink:0;" onclick="removePresetDrink(${i})">✕</button>
-        </div>`).join('')}
-      <button class="btn btn-ghost" style="width:100%;height:36px;border-radius:10px;margin-top:4px;" onclick="addPresetDrink()">+ Getränk</button>
-    </div>
-    <button class="btn btn-primary" style="width:100%;height:44px;border-radius:12px;margin-bottom:10px;" onclick="loadPreset(${p.id})">↧ &nbsp;In die App laden</button>
-    <button class="btn btn-danger" style="width:100%;height:38px;border-radius:10px;" onclick="deletePreset()">🗑 &nbsp;Ort löschen</button>`;
-  refreshOpenAccordions();
+  $('placeTitle').textContent = p.name || 'Ort';
+  $('placeBody').innerHTML =
+    `<h2 class="group-header">Name</h2><div class="group"><label class="row field">` +
+      `<input type="text" value="${esc(p.name)}" placeholder="Name des Orts" autocomplete="off" autocapitalize="words" enterkeyhint="done" oninput="presetName(this.value)"></label></div>` +
+    `<h2 class="group-header">Getränke und Preise</h2><div class="group" id="presetDrinks">` +
+      p.drinks.map((d, i) =>
+        `<div class="row field pd-row"><button class="pd-del" onclick="removePresetDrink(${i})" aria-label="${esc(d.name || 'Getränk')} entfernen">${icon('minus-circle')}</button>` +
+        `<input type="text" value="${esc(d.name)}" placeholder="Name" autocomplete="off" autocapitalize="words" oninput="presetDrink(${i},'name',this.value)">` +
+        `<input type="text" class="num" inputmode="decimal" value="${num(d.price) ? num(d.price).toFixed(2).replace('.', ',') : ''}" placeholder="0,00" oninput="presetDrink(${i},'price',this.value)">` +
+        `<span class="suffix">€</span></div>`).join('') +
+      `<button class="row tappable pd-addrow" onclick="addPresetDrink()"><span class="pd-add">${icon('plus-circle')}</span><span>Getränk hinzufügen</span></button></div>` +
+    `<div class="group spaced"><button class="row tappable action" onclick="loadPreset(${p.id})">In die App laden</button></div>` +
+    `<div class="group spaced"><button class="row tappable action danger" onclick="deletePreset()">Ort löschen</button></div>`;
 }
 function presetName(v) {
   const p = locationPresets.find(x => x.id === _editPresetId);
-  if (p) { p.name = v; save(); }
+  if (!p) return;
+  p.name = v;
+  $('placeTitle').textContent = v.trim() || 'Ort';
+  save();
 }
 function presetDrink(i, field, v) {
   const p = locationPresets.find(x => x.id === _editPresetId);
@@ -1781,6 +1801,8 @@ function addPresetDrink() {
   p.drinks.push({ name: '', price: 0 });
   save();
   renderPresetEditor();
+  const rows = $('presetDrinks').querySelectorAll('.pd-row input[type="text"]:not(.num)');
+  if (rows.length) rows[rows.length - 1].focus();
 }
 function removePresetDrink(i) {
   const p = locationPresets.find(x => x.id === _editPresetId);
@@ -1792,16 +1814,17 @@ function removePresetDrink(i) {
 function deletePreset() {
   const p = locationPresets.find(x => x.id === _editPresetId);
   if (!p) return;
-  const pid = _editPresetId;
-  askConfirm(`„${p.name}“ löschen?`, 'Die gespeicherten Preise für diesen Ort gehen verloren.', 'Löschen', () => {
+  const pid = p.id;
+  askConfirm(`„${p.name || 'Ort'}“ löschen?`, 'Die gespeicherten Preise für diesen Ort gehen verloren.', 'Löschen', () => {
     locationPresets = locationPresets.filter(x => x.id !== pid);
     save();
     closePresetEditor();
+    renderPresetQuick();
     toast('Ort gelöscht');
   });
 }
 
-// ── Export / Import ───────────────────────────────────────────────────────────
+// ── Export / Import ──
 async function exportData() {
   const json = JSON.stringify({
     tipPct,
@@ -1829,37 +1852,55 @@ function importData(input) {
       const d = JSON.parse(r.result);
       if (!d || !Array.isArray(d.history)) throw new Error('invalid');
       askConfirm('Backup importieren?', 'Alle aktuellen Daten in der App werden dadurch ersetzt.', 'Importieren', () => {
-        tipPct     = d.tipPct ?? 10;
-        drinkTypes = (d.drinkTypes ?? []).map(dt => ({ ...dt, cooldown: false, timer: null }));
-        eventLog   = (d.eventLog ?? []).map(e => ({ ...e, time: new Date(e.time) }));
-        history    = (d.history ?? []).map(h => ({ ...h, date: new Date(h.date), events: (h.events || []).map(e => ({ ...e, time: new Date(e.time) })) }));
-        if (d.locationPresets == null) { locationPresets = []; migratePresets(); }
-        else locationPresets = d.locationPresets;
-        save(); updatePill(); renderDrinkTypes(); renderSummary(); renderEventLog(); renderPresetList(); renderHistory();
+        drinkTypes.forEach(dt => { if (dt.timer) clearTimeout(dt.timer); });
+        applyData(d);
+        _evtShowAll = false; _evtLastLen = 0;
+        save();
+        renderTipSeg();
+        renderAll();
+        if (_openSheet === 'sheet-settings') renderSettings();
         toast('Backup importiert');
-      });
-    } catch (e) { toast('Datei konnte nicht gelesen werden'); }
+      }, false);
+    } catch (e) { toast('Datei konnte nicht gelesen werden', 'info'); }
     input.value = '';
   };
   r.readAsText(f);
 }
 
-// ── Service Worker ────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+// ════════════════ Navigationsleiste ════════════════
+let _titleY = 60;
+let _scrollRaf = 0;
+function updateTitleThreshold() {
+  const lt = $('largeTitle');
+  _titleY = lt.getBoundingClientRect().bottom + window.scrollY - $('nav').offsetHeight - 2;
 }
+function onScroll() {
+  if (_frozen) return;
+  const y = window.scrollY;
+  const nav = $('nav');
+  nav.classList.toggle('scrolled', y > 4);
+  nav.classList.toggle('titled', y > _titleY);
+}
+window.addEventListener('scroll', () => {
+  if (_scrollRaf) return;
+  _scrollRaf = requestAnimationFrame(() => { _scrollRaf = 0; onScroll(); });
+}, { passive: true });
+window.addEventListener('resize', () => { fitText($('barTotal'), 24, 16); if (!_frozen) { updateTitleThreshold(); onScroll(); } });
+
+// ════════════════ Start ════════════════
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 // Browser bitten, localStorage nicht automatisch zu räumen
-if (navigator.storage && navigator.storage.persist) {
-  navigator.storage.persist();
-}
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
 
 load();
-loadDarkMode();
 loadGpsSetting();
-updatePill();
-renderDrinkTypes();
-renderSummary();
-renderEventLog();
+applyTheme(false);
+$('dateCap').textContent = dateCap(new Date());
+document.querySelectorAll('.sheet').forEach(initSheetDrag);
+renderTipSeg();
+renderAll();
+updateTitleThreshold();
+onScroll();
 </script>
 </body>
 </html>
