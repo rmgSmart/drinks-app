@@ -1,11 +1,12 @@
-const CACHE = 'drinks-v54';
+const CACHE = 'drinks-v56';
+// Wie lange beim Start auf das Netz gewartet wird, bevor die gecachte Version kommt
+const NAV_TIMEOUT = 2500;
 const CORE = [
   './',
   './index.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap'
+  './manifest.json'
 ];
-// Logos und Icons: werden beim Installieren vorgeladen, ein einzelner Fehlschlag
+// Logos und Icons (Schrift kommt jetzt vom iPhone selbst, kein Google Fonts mehr): werden beim Installieren vorgeladen, ein einzelner Fehlschlag
 // blockiert die Installation aber nicht (allSettled statt addAll).
 const ASSETS = [
   './icon-192.png', './icon-512.png',
@@ -35,15 +36,28 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // App-Seite: erst Netz (damit Updates sofort ankommen), bei offline aus Cache
+  // App Seite: erst Netz (damit Updates sofort ankommen). Antwortet das Netz nicht
+  // innerhalb von NAV_TIMEOUT (schlechter Empfang in der Bar), kommt die gecachte
+  // Version. Das Netz lädt im Hintergrund weiter und aktualisiert den Cache.
   if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).then(r => {
+    const net = fetch(e.request).then(r => {
+      if (r.ok) {
         const copy = r.clone();
         caches.open(CACHE).then(c => c.put('./index.html', copy));
-        return r;
-      }).catch(() => caches.match('./index.html'))
-    );
+      }
+      return r;
+    });
+    e.waitUntil(net.then(() => {}, () => {}));
+    e.respondWith(new Promise(resolve => {
+      let settled = false;
+      const finish = r => { if (!settled && r) { settled = true; resolve(r); } };
+      // Nach Timeout aus dem Cache; gibt es (noch) keinen, weiter auf das Netz warten
+      const timer = setTimeout(() => caches.match('./index.html').then(finish), NAV_TIMEOUT);
+      net.then(
+        r  => { clearTimeout(timer); r.ok ? finish(r) : caches.match('./index.html').then(c => finish(c || r)); },
+        () => { clearTimeout(timer); caches.match('./index.html').then(c => finish(c || Response.error())); }
+      );
+    }));
     return;
   }
   // Alles andere (Fonts, Icons): Cache zuerst, sonst Netz + nachträglich cachen
