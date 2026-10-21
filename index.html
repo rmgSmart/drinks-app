@@ -46,6 +46,7 @@ html[data-theme="light"]{
   --alert-bg:rgba(248,248,248,.97);--menu-bg:rgba(246,246,246,.9);
   --shadow:0 8px 30px rgba(0,0,0,.12);
   --on-tint:#FFFFFF;--cell-brd:transparent;--btn-shadow:0 4px 12px rgba(199,80,0,.25);
+  --status-top:#F2F2F7;--status-scrolled:#F9F9F9;
   --hero-base:#C75000;--hero:linear-gradient(150deg,#C75000 0%,#B04600 65%,#9E3F00 100%);--hero-brd:transparent;
   --hero-label:#FFFFFF;--hero-amount:#FFFFFF;--hero-chip:rgba(0,0,0,.16);
 }
@@ -62,6 +63,7 @@ html[data-theme="dark"]{
   --alert-bg:rgba(44,44,46,.97);--menu-bg:rgba(44,44,46,.92);
   --shadow:0 8px 30px rgba(0,0,0,.55);
   --on-tint:#FFFFFF;--cell-brd:transparent;--btn-shadow:none;
+  --status-top:#000000;--status-scrolled:#1E1E20;
   --hero-base:#C75000;--hero:linear-gradient(150deg,#C75000 0%,#B04600 65%,#9E3F00 100%);--hero-brd:transparent;
   --hero-label:#FFFFFF;--hero-amount:#FFFFFF;--hero-chip:rgba(0,0,0,.18);
 }
@@ -79,6 +81,7 @@ html[data-theme="green"]{
   --alert-bg:rgba(24,58,48,.97);--menu-bg:rgba(24,58,48,.95);
   --shadow:0 10px 30px rgba(0,0,0,.42);
   --cell-brd:rgba(255,255,255,.1);--btn-shadow:0 4px 14px rgba(201,162,75,.3);
+  --status-top:#16392E;--status-scrolled:#123028;
   --hero-base:#22503F;--hero:linear-gradient(150deg,#22503F 0%,#14342B 62%,#1F4A3B 100%);--hero-brd:rgba(201,162,75,.3);
   --hero-label:#B7C6BC;--hero-amount:#E3C077;--hero-chip:rgba(0,0,0,.2);
 }
@@ -87,13 +90,16 @@ html[data-theme="green"] #page{
              radial-gradient(130% 90% at 95% 15%,#0B2019 0%,transparent 60%),
              linear-gradient(165deg,#17392F 0%,#102B22 55%,#0B211A 100%);
   background-size:100% 100lvh;background-repeat:no-repeat;background-color:#0B211A}
+/* iOS nimmt für die Statusleiste die Hintergrundfarbe von body: im Grün die Farbe des Seitenanfangs */
+html[data-theme="green"] body{background:#16392E}
 
 /* ════════════════ Basis ════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 *{-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html{font-size:17px;background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
-html.sheet-open,html.sheet-open body{background:#000}
+/* Scrollsperre, solange ein Sheet offen ist (ändert weder Position noch Scrollstand) */
+html.scroll-lock{overflow:hidden}
 body{font-family:var(--font);font-size:17px;line-height:1.29;color:var(--label);background:var(--bg);
   -webkit-font-smoothing:antialiased;min-height:100%}
 button,input{font:inherit;color:inherit;letter-spacing:inherit}
@@ -105,9 +111,14 @@ input{-webkit-user-select:text;user-select:text}
 
 /* ════════════════ Seite ════════════════ */
 #page{position:relative;min-height:100vh;background:var(--bg);
-  padding:calc(env(safe-area-inset-top) + 44px) 0 calc(env(safe-area-inset-bottom) + 112px);
-  transition:transform .45s var(--ease),clip-path .45s var(--ease),-webkit-clip-path .45s var(--ease)}
-#page.receded{transform:translateY(10px) scale(.94)}
+  padding:calc(env(safe-area-inset-top) + 44px) 0 calc(env(safe-area-inset-bottom) + 112px)}
+
+/* Streifen ganz oben, nur solange ein Overlay offen ist. iOS 26 färbt die Statusleiste nach dem,
+   was am oberen Rand liegt, und zwar ohne Übergang. Der Streifen hält dort die bisherige Farbe fest,
+   damit Abdunkelung, Rückfrage und Kontextmenü die Statusleiste nicht umspringen lassen. */
+#statusBand{position:fixed;top:0;left:0;right:0;height:6px;z-index:700;background:var(--status-top);display:none}
+#statusBand.on{display:block}
+#statusBand.scrolled{background:var(--status-scrolled)}
 .content{max-width:640px;margin:0 auto;padding:0 16px}
 
 /* Navigationsleiste: durchsichtig, beim Scrollen milchig mit kleinem Titel */
@@ -172,6 +183,8 @@ input{-webkit-user-select:text;user-select:text}
 .ic-red{background:#FF3B30}.ic-blue{background:#007AFF}.ic-green{background:#34C759}.ic-gray{background:#8E8E93}
 .venue-ic{background:var(--fill)}
 .row.action{justify-content:center;color:var(--tint);font-weight:500}
+.loc-check{width:20px;height:20px;margin-left:auto;color:var(--tint);visibility:hidden}
+.loc-row.sel .loc-check{visibility:visible}
 .row.action.danger{color:var(--red)}
 .row-total .row-label{font-weight:600}
 .row-total .row-value{color:var(--label);font-family:var(--round);font-weight:700;font-size:22px}
@@ -299,6 +312,8 @@ html.no-switch .ios-switch:checked::before{transform:translateX(20px)}
 .form-hero{display:flex;justify-content:center;padding:6px 0 20px}
 .form-hero .logo{width:80px;height:80px;border-radius:18px;font-size:42px}
 .form-hero .logo.mono{font-size:36px}
+.logo-blank{color:var(--label3)}
+.form-hero .logo-blank .ic{width:34px;height:34px}
 .pd-row{--inset:52px;gap:10px}
 .pd-row input.num{flex:0 0 72px}
 .pd-del{display:flex;color:var(--red-fill);margin-left:-2px}
@@ -339,7 +354,7 @@ html[data-theme="dark"] #venueMap .leaflet-tile-pane,html[data-theme="green"] #v
 .venue-popup-btn{display:block;width:100%;height:34px;border-radius:17px;background:var(--tint-fill);color:var(--on-tint);font-size:15px;font-weight:600;text-align:center}
 
 /* ════════════════ Alert ════════════════ */
-.alert-wrap{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.alert-wrap{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;touch-action:none}
 .alert-wrap.open{opacity:1;visibility:visible}
 .alert{width:270px;border-radius:14px;overflow:hidden;background:var(--alert-bg);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
   transform:scale(1.12);transition:transform .3s var(--spring)}
@@ -355,7 +370,7 @@ html[data-theme="dark"] #venueMap .leaflet-tile-pane,html[data-theme="green"] #v
 .alert-btns button:active{background:var(--fill)}
 
 /* ════════════════ Kontextmenü ════════════════ */
-.ctx{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.ctx{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;touch-action:none}
 html[data-theme="dark"] .ctx,html[data-theme="green"] .ctx{background:rgba(0,0,0,.4)}
 .ctx.open{opacity:1;visibility:visible}
 .ctx-preview{position:fixed;border-radius:14px;overflow:hidden;background:var(--cell);box-shadow:0 12px 40px rgba(0,0,0,.25);transition:transform .35s var(--spring);pointer-events:none}
@@ -389,7 +404,6 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
 </style>
 </head>
 <body>
-<div id="safeProbe" aria-hidden="true" style="position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none"></div>
 
 <!-- Symbole im Stil von SF Symbols (eigene Zeichnungen) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -405,6 +419,7 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
   <symbol id="i-location" viewBox="0 0 24 24"><path fill="currentColor" d="M20.6 3.4L3.6 10.6c-.8.3-.7 1.4.1 1.6l7 1.4 1.4 7c.2.8 1.3.9 1.6.1l7.2-17c.3-.6-.3-1.2-.9-.9z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 3.5h4M6.2 7l.9 12.4c.1 1 .9 1.6 1.8 1.6h6.2c.9 0 1.7-.6 1.8-1.6L17.8 7M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M15.6 4.4l4 4L9 19l-5 1 1-5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M13.6 6.4l4 4" stroke="currentColor" stroke-width="1.9"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.6 4.6L19 7.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.4l3.3 3.3L17.2 8.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 10.8v6" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.4" fill="#fff"/></symbol>
   <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3.5v11M8 7.5l4-4 4 4M8.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -629,6 +644,7 @@ html.theme-switching *:not(.seg-thumb){transition:background-color .35s ease,col
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="statusBand" aria-hidden="true"></div>
 <input type="file" id="importFile" accept=".json,application/json" hidden onchange="importData(this)">
 
 <script>
@@ -713,6 +729,23 @@ function toast(msg, kind = 'ok') {
   _toastTimer = setTimeout(() => t.classList.remove('show'), 2300);
 }
 
+// ════════════════ Statusleiste ruhig halten ════════════════
+const _overlays = new Set();
+let _bandTimer = null;
+function overlayOn(key) {
+  _overlays.add(key);
+  clearTimeout(_bandTimer);
+  const band = $('statusBand');
+  if (!band.classList.contains('on')) band.classList.toggle('scrolled', $('nav').classList.contains('scrolled'));
+  band.classList.add('on');
+}
+// Erst ausblenden, wenn das Overlay fertig ausgeblendet ist
+function overlayOff(key, ms) {
+  if (!_overlays.delete(key) || _overlays.size) return;
+  clearTimeout(_bandTimer);
+  _bandTimer = setTimeout(() => { if (!_overlays.size) $('statusBand').classList.remove('on'); }, reduceMotion() ? 0 : ms);
+}
+
 let _alertCb = null;
 function askConfirm(title, text, okLabel, cb, destructive = true) {
   $('alertTitle').textContent = title;
@@ -721,64 +754,22 @@ function askConfirm(title, text, okLabel, cb, destructive = true) {
   ok.textContent = okLabel;
   ok.classList.toggle('destructive', destructive);
   _alertCb = cb;
+  overlayOn('alert');
   $('alert').classList.add('open');
 }
 function closeAlert(run) {
   $('alert').classList.remove('open');
+  overlayOff('alert', 260);
   const cb = _alertCb; _alertCb = null;
   if (run && cb) cb();
 }
 
 // ════════════════ Sheets ════════════════
 let _openSheet = null;
-let _frozen = null;
-let _unfreezeTimer = null;
-
-// Seite einfrieren (iOS sicherer Scroll Lock) und als Karte zurückweichen lassen
-function freezePage(on, instant) {
-  const page = $('page'), nav = $('nav'), bar = $('bottomBar'), html = document.documentElement;
-  if (on) {
-    if (_frozen) {               // Schließen lief noch: einfach wieder zurückweichen
-      clearTimeout(_unfreezeTimer);
-      html.classList.add('sheet-open');
-      if (_frozen.clip) { page.style.clipPath = page.style.webkitClipPath = _frozen.clip(14); page.classList.add('receded'); }
-      return;
-    }
-    const y = window.scrollY, vh = window.innerHeight;
-    const safeTop = $('safeProbe').offsetHeight;
-    const barTop = bar.getBoundingClientRect().top;
-    page.style.position = 'fixed'; page.style.top = -y + 'px'; page.style.left = '0'; page.style.right = '0';
-    nav.style.position = 'absolute'; nav.style.top = y + 'px';
-    bar.style.position = 'absolute'; bar.style.top = (y + barTop) + 'px'; bar.style.bottom = 'auto';
-    html.classList.add('sheet-open');
-    _frozen = { y, clip: null };
-    syncThemeColor();
-    if (reduceMotion()) return;
-    const h = page.offsetHeight;
-    _frozen.clip = r => `inset(${y}px 0 ${Math.max(0, h - y - vh)}px 0 round ${r}px)`;
-    page.style.transformOrigin = `50% ${y + safeTop}px`;
-    page.style.clipPath = page.style.webkitClipPath = _frozen.clip(0);
-    void page.offsetWidth;
-    page.style.clipPath = page.style.webkitClipPath = _frozen.clip(14);
-    page.classList.add('receded');
-  } else {
-    if (!_frozen) return;
-    const { y } = _frozen;
-    page.classList.remove('receded');
-    if (_frozen.clip) page.style.clipPath = page.style.webkitClipPath = _frozen.clip(0);
-    const done = () => {
-      _frozen = null;
-      ['position', 'top', 'left', 'right', 'transformOrigin', 'clipPath', 'webkitClipPath'].forEach(p => page.style[p] = '');
-      nav.style.position = ''; nav.style.top = '';
-      bar.style.position = ''; bar.style.top = ''; bar.style.bottom = '';
-      html.classList.remove('sheet-open');
-      syncThemeColor();
-      window.scrollTo(0, y);
-      onScroll();
-    };
-    clearTimeout(_unfreezeTimer);
-    if (instant || reduceMotion()) done(); else _unfreezeTimer = setTimeout(done, 460);
-  }
+// Scrollen der Seite sperren, solange ein Sheet offen ist. Die Seite bleibt, wo sie ist:
+// kein Fixieren, kein Verkleinern, kein Zurückspringen beim Schließen.
+function lockScroll(on) {
+  document.documentElement.classList.toggle('scroll-lock', on);
 }
 
 function openSheet(id, view) {
@@ -789,7 +780,8 @@ function openSheet(id, view) {
   setView(id, view || sh.querySelector('.sheet-view').dataset.view, false);
   sh.querySelectorAll('.sheet-body').forEach(b => b.scrollTop = 0);
   _openSheet = id;
-  freezePage(true);
+  overlayOn('sheet');
+  lockScroll(true);
   sh.style.transform = '';
   $('sheetBackdrop').classList.add('open');
   sh.classList.add('open');
@@ -806,7 +798,8 @@ function closeSheet(instant) {
   sh.classList.remove('open');
   sh.setAttribute('aria-hidden', 'true');
   $('sheetBackdrop').classList.remove('open');
-  freezePage(false, instant);
+  lockScroll(false);
+  overlayOff('sheet', instant ? 0 : 500);
   if (id === 'sheet-close') { _venueToken++; destroyVenueMap(); }
   if (id === 'sheet-settings') _editPresetId = null;
 }
@@ -913,7 +906,7 @@ function themePref() {
 function syncThemeColor() {
   const t = document.documentElement.getAttribute('data-theme');
   document.querySelector('meta[name="theme-color"]').content =
-    _frozen || t === 'dark' ? '#000000' : t === 'green' ? '#17392F' : '#F2F2F7';
+    t === 'dark' ? '#000000' : t === 'green' ? '#16392E' : '#F2F2F7';
 }
 function applyTheme(animate) {
   const p = themePref();
@@ -1046,7 +1039,9 @@ function logoHtml(name, cls = '') {
   }
   if (brand) return `<div class="logo ${cls}">${brand.emoji}</div>`;
   const n = String(name || '').trim();
-  const ch = n ? [...n][0].toUpperCase() : '';
+  // Noch kein Name: neutrale Kachel statt leerem Farbquadrat
+  if (!n) return `<div class="logo logo-blank ${cls}">${icon('plus')}</div>`;
+  const ch = [...n][0].toUpperCase();
   let h = 0;
   for (const c of n.toLowerCase()) h = (h * 31 + c.codePointAt(0)) >>> 0;
   return `<div class="logo mono ${cls}" style="background:${MONO_COLORS[h % MONO_COLORS.length]}">${esc(ch)}</div>`;
@@ -1072,16 +1067,14 @@ function drinkRowHtml(dt) {
 function renderDrinkTypes() {
   const wrap = $('drinkTypes');
   const canAnim = _rendered && !reduceMotion();
-  const flip = canAnim && !_frozen;          // bei offenem Sheet nicht messen (Seite ist eingefroren)
   const before = {};
-  wrap.querySelectorAll('.drow-wrap').forEach(el => { before[el.id] = flip ? el.getBoundingClientRect().top : 0; });
+  wrap.querySelectorAll('.drow-wrap').forEach(el => { before[el.id] = el.getBoundingClientRect().top; });
   wrap.innerHTML = drinkTypes.map(drinkRowHtml).join('');
   initRowGestures();
   if (canAnim) {
     wrap.querySelectorAll('.drow-wrap').forEach(el => {
       const old = before[el.id];
-      if (old === undefined) { el.classList.add('row-enter'); return; }   // neue Zeile
-      if (!flip) return;
+      if (old === undefined) { growIn(el); return; }   // neue Zeile: aufklappen, alles darunter rückt weich nach
       const dy = old - el.getBoundingClientRect().top;
       if (!dy) return;
       el.style.transition = 'none';
@@ -1100,6 +1093,27 @@ function renderDrinkTypes() {
   $('sumSection').hidden = drinkTypes.length === 0;
   $('hero').hidden = drinkTypes.length === 0;
   renderPresetQuick();
+}
+// Neue Zeile von Höhe 0 aufklappen: alles darunter rückt dadurch weich nach statt zu springen
+function growIn(el) {
+  const h = el.offsetHeight;
+  el.style.height = '0px';
+  el.style.opacity = '0';
+  void el.offsetHeight;
+  el.style.transition = 'height .34s var(--ease), opacity .3s ease';
+  el.style.height = h + 'px';
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.height = ''; el.style.opacity = ''; el.style.transition = ''; }, 380);
+}
+// Zeile zuklappen und danach erst neu zeichnen
+function collapseOut(el, done) {
+  if (!el || reduceMotion()) { done(); return; }
+  el.style.height = el.offsetHeight + 'px';
+  void el.offsetHeight;
+  el.style.transition = 'height .3s var(--ease), opacity .22s ease';
+  el.style.height = '0px';
+  el.style.opacity = '0';
+  setTimeout(done, 320);
 }
 function setCount(dt) {
   const el = $('dc-count-' + dt.id);
@@ -1385,6 +1399,7 @@ function openCtx(id) {
   const left = Math.min(Math.max(16, r.left + 8), vw - mw - 16);
   Object.assign(menu.style, { top: top + 'px', left: left + 'px', transformOrigin: `${origin} left` });
   _ctxOpenedAt = performance.now();
+  overlayOn('ctx');
   $('ctx').classList.add('open');
 }
 let _ctxOpenedAt = 0;
@@ -1393,7 +1408,7 @@ function ctxBackdropTap(e) {
   if (performance.now() - _ctxOpenedAt < 300) return;   // Nachklick vom Loslassen ignorieren
   closeCtx();
 }
-function closeCtx() { $('ctx').classList.remove('open'); }
+function closeCtx() { $('ctx').classList.remove('open'); overlayOff('ctx', 300); }
 
 // ════════════════ Getränk hinzufügen / bearbeiten ════════════════
 let _editId = null;   // null = neues Getränk
@@ -1458,8 +1473,11 @@ function removeDrinkType(id) {
     if (dt.timer) clearTimeout(dt.timer);
     drinkTypes = drinkTypes.filter(d => d.id !== id);
     eventLog = eventLog.filter(e => e.typeId !== id);
-    renderAll();
     save();
+    renderSummary();
+    renderEventLog();
+    // Zeile weich zuklappen, dann die Liste neu zeichnen
+    collapseOut($('dcw-' + id), () => renderDrinkTypes());
   };
   const hasData = dt.count > 0 || eventLog.some(e => e.typeId === id);
   if (!hasData) { doRemove(); return; }
@@ -1491,8 +1509,8 @@ function renderCloseSheet() {
   $('nearbyRow').hidden = !('geolocation' in navigator);
   _recentLocs = recentLocations();
   $('locRecent').innerHTML = _recentLocs.map((l, i) =>
-    `<button class="row tappable" style="--inset:58px" onclick="pickLocation(${i})"><span class="row-ic ic-gray">${icon('pin')}</span>` +
-    `<span class="row-label">${esc(l)}</span></button>`).join('');
+    `<button class="row tappable loc-row" style="--inset:58px" onclick="pickLocation(${i})"><span class="row-ic ic-gray">${icon('pin')}</span>` +
+    `<span class="row-label">${esc(l)}</span>${icon('check', 'loc-check')}</button>`).join('');
   updateLocChipsVisibility();
   const rows = drinkTypes.filter(d => d.count > 0).map(d =>
     `<div class="row"><span class="row-main"><span class="row-title">${esc(d.name)}</span><span class="row-sub num">${d.count} × ${fmt(d.price)}</span></span>` +
@@ -1507,8 +1525,14 @@ function pickLocation(i) {
   updateLocChipsVisibility();
 }
 function updateLocChipsVisibility() {
-  // Vorschläge nur zeigen, solange noch kein Ort eingetippt oder gewählt ist
-  $('locRecentWrap').hidden = !!$('m-location').value.trim() || _recentLocs.length === 0;
+  // Liste bleibt stehen (kein Springen der Rechnung), der passende Ort bekommt ein Häkchen
+  $('locRecentWrap').hidden = _recentLocs.length === 0;
+  const v = $('m-location').value.trim().toLowerCase();
+  document.querySelectorAll('#locRecent .loc-row').forEach((row, i) => {
+    const on = !!v && (_recentLocs[i] || '').toLowerCase() === v;
+    row.classList.toggle('sel', on);
+    row.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
 }
 function showGpsNote(msg) {
   const n = $('gpsNote');
@@ -1940,7 +1964,6 @@ function updateTitleThreshold() {
   _titleY = lt.getBoundingClientRect().bottom + window.scrollY - $('nav').offsetHeight - 2;
 }
 function onScroll() {
-  if (_frozen) return;
   const y = window.scrollY;
   const nav = $('nav');
   nav.classList.toggle('scrolled', y > 4);
@@ -1950,7 +1973,7 @@ window.addEventListener('scroll', () => {
   if (_scrollRaf) return;
   _scrollRaf = requestAnimationFrame(() => { _scrollRaf = 0; onScroll(); });
 }, { passive: true });
-window.addEventListener('resize', () => { fitText($('heroTotal'), 44, 26); if (!$('heroChips').hidden) fitChips(); if (!_frozen) { updateTitleThreshold(); onScroll(); } });
+window.addEventListener('resize', () => { fitText($('heroTotal'), 44, 26); if (!$('heroChips').hidden) fitChips(); updateTitleThreshold(); onScroll(); });
 
 // ════════════════ Start ════════════════
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
