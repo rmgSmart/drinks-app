@@ -1,4 +1,4 @@
-const CACHE = 'drinks-v58';
+const CACHE = 'drinks-v59';
 // Wie lange beim Start auf das Netz gewartet wird, bevor die gecachte Version kommt
 const NAV_TIMEOUT = 2500;
 const CORE = [
@@ -36,6 +36,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Nur GET lässt sich cachen. Alles andere (z.B. die Lokalsuche per POST) geht direkt ins Netz.
+  if (e.request.method !== 'GET') return;
   // App Seite: erst Netz (damit Updates sofort ankommen). Antwortet das Netz nicht
   // innerhalb von NAV_TIMEOUT (schlechter Empfang in der Bar), kommt die gecachte
   // Version. Das Netz lädt im Hintergrund weiter und aktualisiert den Cache.
